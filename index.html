@@ -6,6 +6,7 @@
     <title>Jurnal Trading Multi-Account</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { transition: background-color 0.3s, color 0.3s; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -33,6 +34,10 @@
         .calendar-day.loss { background-color: rgba(220, 53, 69, 0.15); border-color: #dc3545; }
         .pnl-val { font-weight: bold; font-size: 0.85rem; }
         .trade-count { font-size: 0.7rem; opacity: 0.75; }
+
+        /* Chart Widget Container */
+        .tradingview-widget-container { height: 650px; width: 100%; }
+        .img-thumb { width: 45px; height: 45px; object-fit: cover; border-radius: 5px; cursor: pointer; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
@@ -114,6 +119,11 @@
             <li class="nav-item">
                 <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#tabDashboard" type="button">
                     <i class="fa-solid fa-gauge me-1"></i> Dashboard & Journal
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="tvchart-tab" data-bs-toggle="tab" data-bs-target="#tabTVChart" type="button" onclick="loadTradingViewWidget()">
+                    <i class="fa-solid fa-chart-area me-1"></i> Interactive Chart (FXCM)
                 </button>
             </li>
             <li class="nav-item">
@@ -216,6 +226,14 @@
                                         <input type="number" step="0.01" id="pnl" class="form-control" placeholder="Contoh: 50 atau -25" required>
                                     </div>
                                     <div class="mb-3">
+                                        <label class="form-label">URL Gambar Before (Setup)</label>
+                                        <input type="url" id="imgBefore" class="form-control" placeholder="https://... (TradingView / Imgur)">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">URL Gambar After (Hasil)</label>
+                                        <input type="url" id="imgAfter" class="form-control" placeholder="https://... (TradingView / Imgur)">
+                                    </div>
+                                    <div class="mb-3">
                                         <label class="form-label">Catatan</label>
                                         <textarea id="notes" class="form-control" rows="2"></textarea>
                                     </div>
@@ -238,7 +256,7 @@
                                     <table class="table table-hover mb-0 align-middle">
                                         <thead>
                                             <tr>
-                                                <th>Tanggal</th><th>Aset</th><th>Tipe</th><th>Lot</th><th>P/L ($)</th><th>Catatan</th><th>Aksi</th>
+                                                <th>Tanggal</th><th>Aset</th><th>Tipe</th><th>Lot</th><th>P/L ($)</th><th>Chart (Before/After)</th><th>Aksi</th>
                                             </tr>
                                         </thead>
                                         <tbody id="tradeTableBody">
@@ -252,7 +270,20 @@
                 </div>
             </div>
 
-            <!-- TAB 2: KALENDER PNL (CUSTOM & MANUAL INPUT) -->
+            <!-- TAB 2: INTERACTIVE CHART (TRADINGVIEW & FXCM) -->
+            <div class="tab-pane fade" id="tabTVChart">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="fa-solid fa-chart-line me-2"></i>FXCM Live Trading Chart & Drawing Tools</span>
+                        <small class="text-muted">Powered by TradingView</small>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="tradingview-widget-container" id="tv_chart_container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: KALENDER PNL -->
             <div class="tab-pane fade" id="tabCalendar">
                 <div class="row mb-3 align-items-center">
                     <div class="col-md-8 d-flex align-items-center gap-2">
@@ -266,7 +297,6 @@
                     </div>
                 </div>
 
-                <!-- Monthly Stats Summary -->
                 <div class="row mb-4">
                     <div class="col-md-3 col-6 mb-2">
                         <div class="card p-3 text-center">
@@ -294,7 +324,6 @@
                     </div>
                 </div>
 
-                <!-- Grid Kalender -->
                 <div class="card p-3">
                     <div class="calendar-grid mb-2">
                         <div class="calendar-header-day text-danger">Ming</div>
@@ -309,7 +338,7 @@
                 </div>
             </div>
 
-            <!-- TAB 3: KALKULATOR LOT & RISK -->
+            <!-- TAB 4: KALKULATOR LOT & RISK -->
             <div class="tab-pane fade" id="tabCalculator">
                 <div class="row justify-content-center">
                     <div class="col-md-8">
@@ -336,31 +365,7 @@
                                                 <option value="GBP/USD" data-pip="10">GBP/USD</option>
                                                 <option value="USD/CHF" data-pip="11">USD/CHF</option>
                                                 <option value="AUD/USD" data-pip="10">AUD/USD</option>
-                                                <option value="USD/CAD" data-pip="7.3">USD/CAD</option>
-                                                <option value="NZD/USD" data-pip="10">NZD/USD</option>
-                                                <option value="EUR/GBP" data-pip="12.7">EUR/GBP</option>
-                                                <option value="EUR/JPY" data-pip="6.8">EUR/JPY</option>
-                                                <option value="EUR/CHF" data-pip="11">EUR/CHF</option>
-                                                <option value="EUR/AUD" data-pip="6.5">EUR/AUD</option>
-                                                <option value="EUR/CAD" data-pip="7.3">EUR/CAD</option>
-                                                <option value="EUR/NZD" data-pip="6">EUR/NZD</option>
-                                                <option value="GBP/JPY" data-pip="6.8">GBP/JPY</option>
-                                                <option value="GBP/CHF" data-pip="11">GBP/CHF</option>
-                                                <option value="GBP/AUD" data-pip="6.5">GBP/AUD</option>
-                                                <option value="GBP/CAD" data-pip="7.3">GBP/CAD</option>
-                                                <option value="GBP/NZD" data-pip="6">GBP/NZD</option>
-                                                <option value="CHF/JPY" data-pip="6.8">CHF/JPY</option>
-                                                <option value="AUD/JPY" data-pip="6.8">AUD/JPY</option>
-                                                <option value="CAD/JPY" data-pip="6.8">CAD/JPY</option>
-                                                <option value="NZD/JPY" data-pip="6.8">NZD/JPY</option>
-                                                <option value="AUD/CHF" data-pip="11">AUD/CHF</option>
-                                                <option value="CAD/CHF" data-pip="11">CAD/CHF</option>
-                                                <option value="NZD/CHF" data-pip="11">NZD/CHF</option>
-                                                <option value="AUD/CAD" data-pip="7.3">AUD/CAD</option>
-                                                <option value="AUD/NZD" data-pip="6">AUD/NZD</option>
-                                                <option value="CAD/NZD" data-pip="6">CAD/NZD</option>
                                                 <option value="XAU/USD" data-pip="10">XAU/USD (Gold)</option>
-                                                <option value="XAG/USD" data-pip="50">XAG/USD (Silver)</option>
                                             </select>
                                         </div>
                                         <div class="col-md-6">
@@ -393,7 +398,22 @@
         </div>
     </div>
 
-    <!-- MODAL 1: BUAT JURNAL BARU -->
+    <!-- MODAL PREVIEW GAMBAR BEFORE/AFTER -->
+    <div class="modal fade" id="modalImagePreview" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="previewTitle">Chart Image Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-2">
+                    <img id="previewImage" src="" class="img-fluid rounded" alt="Chart Preview">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL BUAT JURNAL BARU -->
     <div class="modal fade" id="modalCreateJournal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -419,7 +439,7 @@
         </div>
     </div>
 
-    <!-- MODAL 2: INPUT MANUAL/CUSTOM PNL KALENDER -->
+    <!-- MODAL MANUAL PNL KALENDER -->
     <div class="modal fade" id="modalManualPnl" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -443,7 +463,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Catatan Tambahan (Opsional)</label>
-                            <input type="text" id="manualNotes" class="form-control" placeholder="Contoh: News Trading / Overtrade">
+                            <input type="text" id="manualNotes" class="form-control">
                         </div>
                     </form>
                 </div>
@@ -458,6 +478,9 @@
         </div>
     </div>
 
+    <!-- Script TradingView Widget Library -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+
     <!-- SDK Firebase Modular -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -465,7 +488,7 @@
             getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInAnonymously, onAuthStateChanged, signOut 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { 
-            getFirestore, doc, setDoc, getDoc, collection, addDoc, onSnapshot, deleteDoc, query, orderBy, serverTimestamp, getDocs 
+            getFirestore, doc, setDoc, collection, addDoc, onSnapshot, deleteDoc, query, orderBy, serverTimestamp, getDocs 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -491,32 +514,41 @@
         let activeJournalId = 'default';
         let initialBalance = 10000;
         let currentTrades = [];
-        let dailyPnlLogs = {}; // Key: YYYY-MM-DD
+        let dailyPnlLogs = {};
         let calendarDate = new Date();
+        let tvWidgetLoaded = false;
 
         document.getElementById('tradeDate').valueAsDate = new Date();
 
-        // THEME
         window.toggleTheme = function() {
             const html = document.documentElement;
             const newTheme = html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-bs-theme', newTheme);
             localStorage.setItem('theme', newTheme);
             document.getElementById('themeIcon').className = newTheme === 'dark' ? 'fa-solid fa-sun text-warning' : 'fa-solid fa-moon';
+            if (tvWidgetLoaded) loadTradingViewWidget();
         };
 
-        // AUTHENTICATION
+        function showErrorAlert(msg) {
+            const alertBox = document.getElementById('authAlert');
+            alertBox.innerText = msg;
+            alertBox.classList.remove('d-none');
+        }
+
+        function hideErrorAlert() {
+            document.getElementById('authAlert').classList.add('d-none');
+        }
+
         window.toggleAuthMode = function(signUp) {
             isSignUpMode = signUp;
+            hideErrorAlert();
             document.getElementById('authTitle').innerText = isSignUpMode ? "Daftar Akun Baru" : "Masuk ke Jurnal Trading";
             document.getElementById('btnSubmitAuth').innerText = isSignUpMode ? "Daftar" : "Masuk";
-            document.getElementById('authToggleText').innerHTML = isSignUpMode 
-                ? 'Sudah punya akun? <a href="#" onclick="toggleAuthMode(false)">Masuk di sini</a>'
-                : 'Belum punya akun? <a href="#" onclick="toggleAuthMode(true)">Daftar sekarang</a>';
         };
 
         window.handleAuth = async function(e) {
             e.preventDefault();
+            hideErrorAlert();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             try {
@@ -525,11 +557,12 @@
                 } else {
                     await signInWithEmailAndPassword(auth, email, password);
                 }
-            } catch (err) { alert(err.message); }
+            } catch (err) { showErrorAlert(err.message); }
         };
 
         window.handleGuestLogin = async function() {
-            try { await signInAnonymously(auth); } catch (err) { alert(err.message); }
+            hideErrorAlert();
+            try { await signInAnonymously(auth); } catch (err) { showErrorAlert(err.message); }
         };
 
         window.logoutUser = function() { signOut(auth); };
@@ -547,10 +580,11 @@
             } else {
                 document.getElementById('authSection').classList.remove('d-none');
                 document.getElementById('dashboardSection').classList.add('d-none');
+                document.getElementById('userStatus').classList.add('d-none');
+                document.getElementById('btnLogout').classList.add('d-none');
             }
         });
 
-        // MULTI-JOURNAL MANAGEMENT
         async function loadUserJournals() {
             if (!currentUser) return;
             const journalsRef = collection(db, "users", currentUser.uid, "journals");
@@ -560,7 +594,6 @@
             snapshot.forEach(docSnap => journalsList.push({ id: docSnap.id, ...docSnap.data() }));
 
             if (journalsList.length === 0) {
-                // Buat jurnal default jika belum ada
                 const defaultRef = await addDoc(collection(db, "users", currentUser.uid, "journals"), {
                     name: "Jurnal Utama",
                     initialBalance: 10000,
@@ -648,7 +681,6 @@
             renderDashboard(currentTrades);
         };
 
-        // TRADE DATA LISTENER
         function listenToJournalTrades() {
             if (unsubscribeTrades) unsubscribeTrades();
             const q = query(
@@ -664,7 +696,6 @@
             });
         }
 
-        // DAILY PNL MANUAL LISTENER
         function listenToDailyPnl() {
             if (unsubscribeDailyPnl) unsubscribeDailyPnl();
             const colRef = collection(db, "users", currentUser.uid, "journals", activeJournalId, "dailyPnl");
@@ -686,6 +717,8 @@
                 type: document.getElementById('type').value,
                 lot: parseFloat(document.getElementById('lotSize').value) || 0.01,
                 pnl: parseFloat(document.getElementById('pnl').value) || 0,
+                imgBefore: document.getElementById('imgBefore').value.trim(),
+                imgAfter: document.getElementById('imgAfter').value.trim(),
                 notes: document.getElementById('notes').value,
                 timestamp: serverTimestamp()
             });
@@ -700,7 +733,12 @@
             }
         };
 
-        // RENDER DASHBOARD
+        window.openImageModal = function(url, title) {
+            document.getElementById('previewTitle').innerText = title;
+            document.getElementById('previewImage').src = url;
+            new bootstrap.Modal(document.getElementById('modalImagePreview')).show();
+        };
+
         function renderDashboard(trades) {
             const tbody = document.getElementById('tradeTableBody');
             tbody.innerHTML = '';
@@ -720,6 +758,10 @@
                     chartLabels.push(t.date);
                     chartData.push(currentBalance);
 
+                    let beforeThumb = t.imgBefore ? `<img src="${t.imgBefore}" class="img-thumb me-1" title="Before" onclick="openImageModal('${t.imgBefore}', 'Setup Before - ${t.pair}')">` : '';
+                    let afterThumb = t.imgAfter ? `<img src="${t.imgAfter}" class="img-thumb" title="After" onclick="openImageModal('${t.imgAfter}', 'Result After - ${t.pair}')">` : '';
+                    let imgCol = (beforeThumb || afterThumb) ? `${beforeThumb}${afterThumb}` : '<small class="text-muted">-</small>';
+
                     tbody.innerHTML += `
                         <tr>
                             <td>${t.date}</td>
@@ -727,7 +769,7 @@
                             <td><span class="badge ${t.type === 'BUY' ? 'bg-primary' : 'bg-warning text-dark'}">${t.type}</span></td>
                             <td>${t.lot}</td>
                             <td class="${t.pnl >= 0 ? 'text-success fw-bold' : 'text-danger fw-bold'}">${t.pnl >= 0 ? '+' : ''}$${t.pnl.toFixed(2)}</td>
-                            <td><small>${t.notes || '-'}</small></td>
+                            <td>${imgCol}</td>
                             <td><button class="btn btn-sm btn-outline-danger" onclick="deleteTrade('${t.id}')"><i class="fa-solid fa-trash"></i></button></td>
                         </tr>
                     `;
@@ -759,7 +801,27 @@
             });
         }
 
-        // KALENDER PNL CUSTOM & MANUAL
+        window.loadTradingViewWidget = function() {
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'dark' : 'light';
+            document.getElementById('tv_chart_container').innerHTML = '';
+            
+            new TradingView.widget({
+                "autosize": true,
+                "symbol": "FXCM:EURUSD",
+                "interval": "60",
+                "timezone": "Asia/Jakarta",
+                "theme": currentTheme,
+                "style": "1",
+                "locale": "id",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "allow_symbol_change": true,
+                "hide_side_toolbar": false,
+                "container_id": "tv_chart_container"
+            });
+            tvWidgetLoaded = true;
+        };
+
         window.changeMonth = function(offset) {
             calendarDate.setMonth(calendarDate.getMonth() + offset);
             renderCalendar();
@@ -779,7 +841,6 @@
             const firstDay = new Date(year, month, 1).getDay();
             const totalDays = new Date(year, month + 1, 0).getDate();
 
-            // Gabungkan data dari Transaksi Otomatis dan Custom Daily PnL
             const combinedData = {};
 
             currentTrades.forEach(t => {
@@ -789,7 +850,6 @@
                 combinedData[t.date].count += 1;
             });
 
-            // Overwrite / Tambahkan jika ada Log Custom Daily PnL
             Object.keys(dailyPnlLogs).forEach(dateKey => {
                 const manual = dailyPnlLogs[dateKey];
                 combinedData[dateKey] = {
@@ -897,7 +957,6 @@
             }
         };
 
-        // KALKULATOR
         window.calculateLotSize = function() {
             const balance = parseFloat(document.getElementById('calcBalance').value) || 0;
             const riskPercent = parseFloat(document.getElementById('calcRiskPercent').value) || 0;
@@ -921,6 +980,5 @@
 
         calculateLotSize();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
