@@ -1,1335 +1,495 @@
 <!DOCTYPE html>
-<html lang="id" class="dark">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jurnal Trading Profesional</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            500: '#22c55e',
-                            600: '#16a34a',
-                            700: '#15803d',
-                            900: '#14532d',
-                        },
-                        darkbg: '#0f172a',
-                        cardbg: '#1e293b',
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- FontAwesome Icons & Chart.js & Google Font -->
+    <title>Jurnal Trading</title>
+    <!-- Bootstrap CSS & FontAwesome -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: none;
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #fff;
+            border-bottom: 1px solid #edf2f7;
+            font-weight: 600;
+        }
+        .auth-card {
+            max-width: 420px;
+            margin: 60px auto;
+        }
+        .badge-win { background-color: #198754; }
+        .badge-loss { background-color: #dc3545; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+<body>
 
-    <!-- Header / Navbar -->
-    <header class="bg-slate-800/80 backdrop-blur border-b border-slate-700/60 sticky top-0 z-30 transition-all">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <!-- Brand Logo -->
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-500/20">
-                    <i class="fa-solid me-0.5 fa-chart-line"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-lg leading-none text-white tracking-wide">TradeMaster</h1>
-                    <p class="text-xs text-slate-400 font-medium mt-0.5">Jurnal Trading Profesional</p>
-                </div>
-            </div>
-
-            <!-- Sync Indicator & User Status -->
-            <div class="flex items-center space-x-3 sm:space-x-4">
-                <!-- Sync Badge -->
-                <div id="syncBadge" class="hidden sm:flex items-center space-x-2 text-xs px-2.5 py-1 rounded-full bg-slate-700/60 text-slate-300 border border-slate-600/50">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" id="syncDot"></span>
-                    <span id="syncText">Tersinkron Cloud</span>
-                </div>
-
-                <!-- Account / Auth UI -->
-                <div id="userInfo" class="flex items-center space-x-2">
-                    <div class="text-right hidden sm:block">
-                        <div id="userDisplayName" class="text-xs font-semibold text-slate-200">Pengguna Anonim</div>
-                        <div id="userEmail" class="text-[10px] text-slate-400">Penyimpanan Lokal & Cloud</div>
-                    </div>
-                    <button onclick="openAuthModal()" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-700 hover:bg-slate-600 text-slate-200 transition border border-slate-600 flex items-center space-x-1.5">
-                        <i class="fa-solid fa-user-gear text-brand-400"></i>
-                        <span id="authBtnText">Akun / Login</span>
-                    </button>
-                </div>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="fa-solid fa-chart-line text-success me-2"></i>Jurnal Trading</a>
+            <div class="d-flex align-items-center">
+                <span id="userStatus" class="navbar-text me-3 text-light d-none">
+                    <i class="fa-solid fa-circle-user me-1"></i> <span id="userEmail"></span>
+                </span>
+                <button id="btnLogout" class="btn btn-outline-light btn-sm d-none" onclick="logoutUser()">
+                    <i class="fa-solid fa-right-from-bracket me-1"></i>Keluar
+                </button>
             </div>
         </div>
-    </header>
+    </nav>
 
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-        <!-- Navigation Tabs -->
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-700/60 pb-3">
-            <nav class="flex space-x-1 sm:space-x-2 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="tab-btn active px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 bg-brand-600 text-white shadow-md">
-                    <i class="fa-solid fa-chart-pie"></i>
-                    <span>Dashboard</span>
-                </button>
-                <button onclick="switchTab('trades')" id="tab-trades" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-800">
-                    <i class="fa-solid fa-list-check"></i>
-                    <span>Log Transaksi</span>
-                </button>
-                <button onclick="switchTab('risk-calc')" id="tab-risk-calc" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-800">
-                    <i class="fa-solid fa-calculator"></i>
-                    <span>Kalkulator Risiko</span>
-                </button>
-                <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-800">
-                    <i class="fa-solid fa-magnifying-glass-chart"></i>
-                    <span>Analisis Performa</span>
-                </button>
-            </nav>
-
-            <button onclick="openTradeModal()" class="w-full sm:w-auto px-4 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-emerald-500 hover:from-brand-500 hover:to-emerald-400 text-white font-semibold text-sm transition shadow-lg shadow-brand-600/25 flex items-center justify-center space-x-2 active:scale-95">
-                <i class="fa-solid fa-plus-circle"></i>
-                <span>Tambah Trade Baru</span>
-            </button>
-        </div>
-
-        <!-- TAB 1: DASHBOARD -->
-        <section id="view-dashboard" class="space-y-6">
-            <!-- Key Metrics Overview -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Total Balance / PnL -->
-                <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-4 shadow-sm relative overflow-hidden">
-                    <div class="flex items-center justify-between text-slate-400 text-xs font-medium mb-1">
-                        <span>Total PnL Bersih</span>
-                        <i class="fa-solid fa-wallet text-brand-400 text-base"></i>
-                    </div>
-                    <div id="statTotalPnL" class="text-xl sm:text-2xl font-extrabold text-slate-100">$0.00</div>
-                    <div id="statPnLPercent" class="text-xs font-semibold text-slate-400 mt-1 flex items-center space-x-1">
-                        <span>0.0% dari modal dasar</span>
-                    </div>
-                </div>
-
-                <!-- Win Rate -->
-                <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-4 shadow-sm relative overflow-hidden">
-                    <div class="flex items-center justify-between text-slate-400 text-xs font-medium mb-1">
-                        <span>Win Rate</span>
-                        <i class="fa-solid fa-trophy text-amber-400 text-base"></i>
-                    </div>
-                    <div id="statWinRate" class="text-xl sm:text-2xl font-extrabold text-slate-100">0%</div>
-                    <div id="statWinLossCount" class="text-xs font-medium text-slate-400 mt-1">
-                        0 Menang / 0 Kalah
-                    </div>
-                </div>
-
-                <!-- Profit Factor -->
-                <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-4 shadow-sm relative overflow-hidden">
-                    <div class="flex items-center justify-between text-slate-400 text-xs font-medium mb-1">
-                        <span>Profit Factor</span>
-                        <i class="fa-solid fa-scale-balanced text-cyan-400 text-base"></i>
-                    </div>
-                    <div id="statProfitFactor" class="text-xl sm:text-2xl font-extrabold text-slate-100">0.00</div>
-                    <div class="text-xs font-medium text-slate-400 mt-1">Target Sehat > 1.5</div>
-                </div>
-
-                <!-- Total Trades -->
-                <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-4 shadow-sm relative overflow-hidden">
-                    <div class="flex items-center justify-between text-slate-400 text-xs font-medium mb-1">
-                        <span>Total Transaksi</span>
-                        <i class="fa-solid fa-receipt text-indigo-400 text-base"></i>
-                    </div>
-                    <div id="statTotalTrades" class="text-xl sm:text-2xl font-extrabold text-slate-100">0</div>
-                    <div id="statOpenTrades" class="text-xs font-medium text-amber-400 mt-1">0 Berjalan</div>
-                </div>
+    <!-- SECTION 1: AUTHENTICATION (Login & Sign Up) -->
+    <div id="authSection" class="container">
+        <div class="card auth-card">
+            <div class="card-header text-center py-3">
+                <h5 class="mb-0" id="authTitle">Masuk ke Jurnal Trading</h5>
             </div>
+            <div class="card-body p-4">
+                <div id="authAlert" class="alert alert-danger d-none" role="alert"></div>
 
-            <!-- Equity Curve Chart -->
-            <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-5 shadow-sm space-y-4">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div>
-                        <h2 class="text-base font-bold text-slate-100 flex items-center space-x-2">
-                            <i class="fa-solid fa-chart-line text-brand-400"></i>
-                            <span>Kurva Ekuitas (Cumulative Equity Curve)</span>
-                        </h2>
-                        <p class="text-xs text-slate-400">Pertumbuhan akumulasi PnL berdasarkan kronologi transaksi</p>
+                <!-- Form Auth -->
+                <form id="authForm" onsubmit="handleAuth(event)">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Alamat Email</label>
+                        <input type="email" class="form-control" id="email" required placeholder="nama@email.com">
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <label class="text-xs text-slate-400">Modal Awal ($):</label>
-                        <input type="number" id="initialCapitalInput" value="1000" onchange="updateDashboardStats()" class="w-24 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Kata Sandi</label>
+                        <input type="password" class="form-control" id="password" required placeholder="******">
                     </div>
-                </div>
-
-                <div class="h-64 sm:h-80 w-full relative">
-                    <canvas id="equityChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Recent Trades Summary Table -->
-            <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-5 shadow-sm space-y-4">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-sm font-bold text-slate-100 flex items-center space-x-2">
-                        <i class="fa-solid fa-clock-rotate-left text-brand-400"></i>
-                        <span>Transaksi Terakhir</span>
-                    </h3>
-                    <button onclick="switchTab('trades')" class="text-xs text-brand-400 hover:underline font-medium">Lihat Semua Log →</button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs text-slate-300">
-                        <thead class="bg-slate-900/60 text-slate-400 uppercase font-semibold border-b border-slate-700">
-                            <tr>
-                                <th class="p-3">Tanggal</th>
-                                <th class="p-3">Pair</th>
-                                <th class="p-3">Tipe</th>
-                                <th class="p-3">Lot</th>
-                                <th class="p-3">Entry</th>
-                                <th class="p-3">Exit</th>
-                                <th class="p-3">PnL ($)</th>
-                                <th class="p-3">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="recentTradesTableBody" class="divide-y divide-slate-700/50">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 2: LOG TRANSAKSI -->
-        <section id="view-trades" class="hidden space-y-4">
-            <!-- Filter & Controls Bar -->
-            <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row gap-3 justify-between items-center">
-                <!-- Search & Filters -->
-                <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
-                    <div class="relative flex-grow sm:flex-grow-0 sm:w-48">
-                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-                        <input type="text" id="tradeSearchInput" oninput="renderTradesTable()" placeholder="Cari Symbol / Strategi..." class="w-full pl-8 pr-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-brand-500">
-                    </div>
-
-                    <select id="filterStatus" onchange="renderTradesTable()" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
-                        <option value="ALL">Semua Status</option>
-                        <option value="WIN">Win</option>
-                        <option value="LOSS">Loss</option>
-                        <option value="OPEN">Open</option>
-                        <option value="BE">Breakeven</option>
-                    </select>
-
-                    <select id="filterCategory" onchange="renderTradesTable()" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-brand-500">
-                        <option value="ALL">Semua Aset</option>
-                        <option value="Forex">Forex</option>
-                        <option value="Crypto">Crypto</option>
-                        <option value="Commodity">Komoditas (Gold/Oil)</option>
-                        <option value="Indices">Indeks</option>
-                    </select>
-                </div>
-
-                <!-- Export/Import Actions -->
-                <div class="flex items-center space-x-2 w-full md:w-auto justify-end">
-                    <button onclick="exportTradesCSV()" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs font-medium transition border border-slate-600 flex items-center space-x-1.5">
-                        <i class="fa-solid fa-download"></i>
-                        <span>Export CSV</span>
+                    <button type="submit" id="btnSubmitAuth" class="btn btn-primary w-100 mb-3">
+                        <i class="fa-solid fa-right-to-bracket me-1"></i>Masuk
                     </button>
-                    <label class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs font-medium transition border border-slate-600 cursor-pointer flex items-center space-x-1.5">
-                        <i class="fa-solid fa-upload"></i>
-                        <span>Import</span>
-                        <input type="file" id="importJsonInput" accept=".json" onchange="importTradesJSON(event)" class="hidden">
-                    </label>
+                </form>
+
+                <div class="text-center">
+                    <small id="authToggleText">Belum punya akun? <a href="#" onclick="toggleAuthMode(true)">Daftar sekarang</a></small>
                 </div>
-            </div>
-
-            <!-- Detailed Trades Table -->
-            <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl overflow-hidden shadow-sm">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-xs text-slate-300">
-                        <thead class="bg-slate-900/80 text-slate-400 uppercase font-semibold border-b border-slate-700">
-                            <tr>
-                                <th class="p-3">Tanggal</th>
-                                <th class="p-3">Pair / Symbol</th>
-                                <th class="p-3">Direction</th>
-                                <th class="p-3">Lot Size</th>
-                                <th class="p-3">Harga Entry</th>
-                                <th class="p-3">Stop Loss</th>
-                                <th class="p-3">Take Profit</th>
-                                <th class="p-3">Harga Exit</th>
-                                <th class="p-3">PnL ($)</th>
-                                <th class="p-3">Strategi & Psikologi</th>
-                                <th class="p-3">Status</th>
-                                <th class="p-3 text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="fullTradesTableBody" class="divide-y divide-slate-700/50">
-                            <!-- Populated dynamically -->
-                        </tbody>
-                    </table>
-                </div>
-                <div id="emptyState" class="hidden p-8 text-center space-y-3">
-                    <div class="w-12 h-12 mx-auto rounded-full bg-slate-700/50 flex items-center justify-center text-slate-400 text-lg">
-                        <i class="fa-solid fa-folder-open"></i>
-                    </div>
-                    <p class="text-sm text-slate-400 font-medium">Belum ada transaksi ditemukan</p>
-                    <button onclick="openTradeModal()" class="text-xs text-brand-400 hover:underline">Tambah transaksi pertama sekarang</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 3: KALKULATOR RISIKO -->
-        <section id="view-risk-calc" class="hidden space-y-6">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Calculator Controls -->
-                <div class="lg:col-span-2 bg-slate-800/80 border border-slate-700/60 rounded-2xl p-6 shadow-sm space-y-5">
-                    <div class="border-b border-slate-700/60 pb-3">
-                        <h2 class="text-base font-bold text-slate-100 flex items-center space-x-2">
-                            <i class="fa-solid fa-calculator text-brand-400"></i>
-                            <span>Kalkulator Manajemen Risiko & Posisi Lot</span>
-                        </h2>
-                        <p class="text-xs text-slate-400 mt-1">Hitung lot size presisi berdasarkan pasangan mata uang (currency pair) dan batasan Stop Loss dalam Pips/Poin.</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <!-- Saldo Akun -->
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-semibold text-slate-300">Saldo Akun / Capital ($)</label>
-                            <input type="number" id="calcAccountBalance" value="1000" min="1" step="10" oninput="calculatePositionSize()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-100 focus:border-brand-500 focus:outline-none">
-                        </div>
-
-                        <!-- Risiko % -->
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-semibold text-slate-300">Risiko Per Trade (%)</label>
-                            <div class="relative">
-                                <input type="number" id="calcRiskPercent" value="1.0" min="0.1" max="100" step="0.1" oninput="calculatePositionSize()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 pr-8 text-xs text-slate-100 focus:border-brand-500 focus:outline-none">
-                                <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-bold">%</span>
-                            </div>
-                        </div>
-
-                        <!-- Currency Pair Selector -->
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-semibold text-slate-300">Currency Pair / Pasangan Aset</label>
-                            <select id="calcCurrencyPair" onchange="calculatePositionSize()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-100 focus:border-brand-500 focus:outline-none">
-                                <option value="EURUSD" data-pip="10" data-cat="Forex">EUR/USD (Euro / US Dollar)</option>
-                                <option value="GBPUSD" data-pip="10" data-cat="Forex">GBP/USD (British Pound)</option>
-                                <option value="USDJPY" data-pip="9.1" data-cat="Forex">USD/JPY (Japanese Yen)</option>
-                                <option value="AUDUSD" data-pip="10" data-cat="Forex">AUD/USD (Aussie Dollar)</option>
-                                <option value="USDCAD" data-pip="7.5" data-cat="Forex">USD/CAD (Canadian Dollar)</option>
-                                <option value="USDCHF" data-pip="10.8" data-cat="Forex">USD/CHF (Swiss Franc)</option>
-                                <option value="XAUUSD" data-pip="10" data-cat="Commodity">XAU/USD (Gold / Emas)</option>
-                                <option value="BTCUSD" data-pip="1" data-cat="Crypto">BTC/USD (Bitcoin)</option>
-                                <option value="ETHUSD" data-pip="1" data-cat="Crypto">ETH/USD (Ethereum)</option>
-                            </select>
-                        </div>
-
-                        <!-- Stop Loss dalam Pips -->
-                        <div class="space-y-1.5">
-                            <label class="text-xs font-semibold text-slate-300">Stop Loss (Dalam Pips / Poin)</label>
-                            <div class="relative">
-                                <input type="number" id="calcStopLossPips" value="20" min="1" step="1" oninput="calculatePositionSize()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 pr-12 text-xs text-slate-100 focus:border-brand-500 focus:outline-none">
-                                <span class="absolute right-3 top-2.5 text-xs text-slate-400 font-semibold">Pips</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Button Apply to New Trade -->
-                    <div class="pt-2">
-                        <button onclick="applyCalcToNewTrade()" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl text-xs transition shadow-md shadow-brand-600/20 flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                            <span>Masukkan Nilai Ke Form Trade Baru</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Calculator Output Cards -->
-                <div class="space-y-4">
-                    <!-- Resiko dalam Uang ($) -->
-                    <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-5 shadow-sm space-y-1">
-                        <div class="text-xs text-slate-400 font-medium">Nominal Risiko Toleransi</div>
-                        <div id="calcOutputRiskMoney" class="text-2xl font-black text-rose-400">$10.00</div>
-                        <div class="text-[11px] text-slate-500">Jumlah maksimum kerugian jika SL tersentuh</div>
-                    </div>
-
-                    <!-- Recommendation Lot Size -->
-                    <div class="bg-slate-800/80 border border-brand-500/40 rounded-2xl p-5 shadow-sm space-y-1 bg-gradient-to-br from-slate-800 via-slate-800 to-brand-900/20">
-                        <div class="text-xs text-brand-400 font-semibold uppercase tracking-wider">Ukuran Posisi Direkomendasikan</div>
-                        <div id="calcOutputLotSize" class="text-3xl font-extrabold text-white">0.05 Lot</div>
-                        <div id="calcOutputPipValue" class="text-[11px] text-slate-400 mt-1">Nilai Estimasi: ~$0.50 per Pip</div>
-                    </div>
-
-                    <!-- Risk Rule Info Box -->
-                    <div class="bg-slate-900/60 border border-slate-700/50 rounded-2xl p-4 text-xs text-slate-400 space-y-2">
-                        <div class="font-semibold text-slate-300 flex items-center space-x-1.5">
-                            <i class="fa-solid fa-shield-halved text-amber-400"></i>
-                            <span>Golden Rule Manajemen Risiko:</span>
-                        </div>
-                        <p class="leading-relaxed">Disiplin membatasi risiko maksimal <strong>1% - 2%</strong> per transaksi untuk menjaga ketahanan akun dari maraton *drawdown* beruntun.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 4: ANALISIS PERFORMA -->
-        <section id="view-analytics" class="hidden space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Strategy Distribution -->
-                <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-5 shadow-sm space-y-4">
-                    <h3 class="text-sm font-bold text-slate-100 flex items-center space-x-2">
-                        <i class="fa-solid fa-chess text-indigo-400"></i>
-                        <span>Kinerja Berdasarkan Strategi</span>
-                    </h3>
-                    <div class="h-56 relative">
-                        <canvas id="strategyChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Emotional Impact -->
-                <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl p-5 shadow-sm space-y-4">
-                    <h3 class="text-sm font-bold text-slate-100 flex items-center space-x-2">
-                        <i class="fa-solid fa-brain text-purple-400"></i>
-                        <span>Analisis Psikologi / Emosi</span>
-                    </h3>
-                    <div class="h-56 relative">
-                        <canvas id="emotionChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- MODAL 1: ADD / EDIT TRADE -->
-    <div id="tradeModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4 overflow-y-auto">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 my-8">
-            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
-                <h3 id="tradeModalTitle" class="text-base font-bold text-slate-100 flex items-center space-x-2">
-                    <i class="fa-solid fa-pen-to-square text-brand-400"></i>
-                    <span>Catat Transaksi Baru</span>
-                </h3>
-                <button onclick="closeTradeModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <form id="tradeForm" onsubmit="handleTradeSubmit(event)" class="space-y-4">
-                <input type="hidden" id="formTradeId">
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300">Waktu & Tanggal</label>
-                        <input type="datetime-local" id="formDate" required class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:border-brand-500 focus:outline-none">
-                    </div>
-
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300">Pair / Symbol</label>
-                        <input type="text" id="formSymbol" required placeholder="misal: EURUSD / XAUUSD" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 uppercase focus:border-brand-500 focus:outline-none">
-                    </div>
-
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300">Kategori Aset</label>
-                        <select id="formCategory" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:border-brand-500 focus:outline-none">
-                            <option value="Forex">Forex</option>
-                            <option value="Crypto">Crypto</option>
-                            <option value="Commodity">Komoditas</option>
-                            <option value="Indices">Indeks</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300">Arah / Posisi</label>
-                        <select id="formDirection" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:border-brand-500 focus:outline-none">
-                            <option value="LONG">BUY (Long)</option>
-                            <option value="SHORT">SELL (Short)</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300">Ukuran Posisi (Lot)</label>
-                        <input type="number" id="formSize" step="0.01" required placeholder="0.01" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:border-brand-500 focus:outline-none">
-                    </div>
-
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300">Status Posisi</label>
-                        <select id="formStatus" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:border-brand-500 focus:outline-none">
-                            <option value="OPEN">Berjalan (OPEN)</option>
-                            <option value="WIN">Selesai: WIN</option>
-                            <option value="LOSS">Selesai: LOSS</option>
-                            <option value="BE">Selesai: Breakeven (BE)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Prices -->
-                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300">Harga Entry</label>
-                        <input type="number" id="formEntry" step="any" placeholder="1.08500" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:border-brand-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300">Stop Loss</label>
-                        <input type="number" id="formStopLoss" step="any" placeholder="1.08300" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:border-brand-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300">Take Profit</label>
-                        <input type="number" id="formTakeProfit" step="any" placeholder="1.08900" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:border-brand-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300">Harga Exit</label>
-                        <input type="number" id="formExit" step="any" placeholder="1.08900" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:border-brand-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <!-- PnL manual override / auto calc -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300">Profit / Loss ($ PnL)</label>
-                        <input type="number" id="formPnl" step="any" placeholder="0.00" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:border-brand-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300">Model Strategi</label>
-                        <input type="text" id="formStrategy" placeholder="misal: Breakout / Supply Demand" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:border-brand-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300">Kondisi Psikologi</label>
-                        <select id="formEmotion" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:border-brand-500 focus:outline-none">
-                            <option value="Disiplin (Sesuai Rencana)">Disiplin (Sesuai Rencana)</option>
-                            <option value="FOMO (Takut Ketinggalan)">FOMO (Takut Ketinggalan)</option>
-                            <option value="Revenge Trade (Dendam)">Revenge Trade (Dendam)</option>
-                            <option value="Ragu / Takut">Ragu / Takut</option>
-                            <option value="Over-leveraged">Over-leveraged</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Notes & Chart Screenshot Link -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300">Link Screenshot Chart (TradingView)</label>
-                        <input type="url" id="formChartUrl" placeholder="https://s3.tradingview.com/..." class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:border-brand-500 focus:outline-none">
-                    </div>
-                    <div>
-                        <label class="text-xs font-semibold text-slate-300">Catatan & Evaluasi</label>
-                        <input type="text" id="formNotes" placeholder="Mengapa mengambil posisi ini?" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2 text-xs text-slate-200 focus:border-brand-500 focus:outline-none">
-                    </div>
-                </div>
-
-                <div class="pt-3 flex justify-end space-x-3 border-t border-slate-700">
-                    <button type="button" onclick="closeTradeModal()" class="px-4 py-2 rounded-xl text-xs font-medium bg-slate-700 hover:bg-slate-600 text-slate-300 transition">Batal</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl text-xs font-semibold bg-brand-600 hover:bg-brand-500 text-white transition shadow-lg shadow-brand-600/20">Simpan Transaksi</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL 2: AUTHENTICATION / LOGIN -->
-    <div id="authModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
-            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
-                <h3 class="text-base font-bold text-slate-100 flex items-center space-x-2">
-                    <i class="fa-solid fa-user-shield text-brand-400"></i>
-                    <span>Akun Pengguna & Cloud Storage</span>
-                </h3>
-                <button onclick="closeAuthModal()" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-
-            <p class="text-xs text-slate-400 leading-relaxed">
-                Login atau daftar untuk mengamankan data jurnal Anda secara otomatis di cloud, agar tidak hilang saat ganti perangkat.
-            </p>
-
-            <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-3">
-                <div>
-                    <label class="text-xs font-semibold text-slate-300">Email</label>
-                    <input type="email" id="authEmail" required placeholder="nama@email.com" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200 focus:border-brand-500 focus:outline-none">
-                </div>
-                <div>
-                    <label class="text-xs font-semibold text-slate-300">Password</label>
-                    <input type="password" id="authPassword" required placeholder="••••••••" class="w-full mt-1 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-slate-200 focus:border-brand-500 focus:outline-none">
-                </div>
-
-                <div class="pt-2 flex flex-col gap-2">
-                    <button type="submit" id="authSubmitBtn" class="w-full py-2.5 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl text-xs transition shadow-md shadow-brand-600/20">
-                        Login / Buat Akun Cloud
-                    </button>
-                    <button type="button" onclick="loginAnonymously()" class="w-full py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded-xl transition">
-                        Lanjutkan Sebagai Tamu (Guest Mode)
-                    </button>
-                </div>
-            </form>
-
-            <div id="currentUserDetails" class="hidden border-t border-slate-700 pt-3 text-xs text-slate-300 space-y-2">
-                <div class="flex justify-between items-center">
-                    <span>Status Login:</span>
-                    <span id="activeUserLabel" class="font-bold text-brand-400">Guest</span>
-                </div>
-                <button onclick="handleLogout()" class="w-full py-2 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 font-semibold rounded-xl text-xs transition border border-rose-500/30">
-                    Keluar / Logout
-                </button>
             </div>
         </div>
     </div>
 
-    <!-- Notification Toast Container -->
-    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm"></div>
+    <!-- SECTION 2: DASHBOARD TRADING (Tampilan Utama setelah Login) -->
+    <div id="dashboardSection" class="container mt-4 d-none">
+        
+        <!-- Summary Cards -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <h6 class="card-title">Total Trade</h6>
+                        <h2 id="statTotal" class="mb-0">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <h6 class="card-title">Win Rate</h6>
+                        <h2 id="statWinRate" class="mb-0">0%</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-info">
+                    <div class="card-body">
+                        <h6 class="card-title">Total Profit/Loss</h6>
+                        <h2 id="statPnL" class="mb-0">$0.00</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-secondary">
+                    <div class="card-body">
+                        <h6 class="card-title">Profit Factor</h6>
+                        <h2 id="statPF" class="mb-0">0.00</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <div class="row">
+            <!-- Form Input Trade -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-plus me-1"></i>Tambah Transaksi
+                    </div>
+                    <div class="card-body">
+                        <form id="tradeForm" onsubmit="saveTrade(event)">
+                            <div class="mb-3">
+                                <label class="form-label">Pasangan / Aset</label>
+                                <input type="text" id="pair" class="form-control" placeholder="Contoh: EURUSD, XAUUSD" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Tipe</label>
+                                <select id="type" class="form-select" required>
+                                    <option value="BUY">BUY</option>
+                                    <option value="SELL">SELL</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Hasil (P/L $)</label>
+                                <input type="number" step="0.01" id="pnl" class="form-control" placeholder="Contoh: 50 atau -25" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Catatan / Alasan</label>
+                                <textarea id="notes" class="form-control" rows="2" placeholder="Catatan analisis..."></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">Simpan Trade</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabel & Grafik -->
+            <div class="col-md-8">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fa-solid fa-chart-line me-1"></i>Grafik Performa Portfolio
+                    </div>
+                    <div class="card-body">
+                        <canvas id="performanceChart" height="100"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-list me-1"></i>Riwayat Transaksi
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0 align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Tanggal</th>
+                                        <th>Aset</th>
+                                        <th>Tipe</th>
+                                        <th>P/L ($)</th>
+                                        <th>Catatan</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tradeTableBody">
+                                    <tr>
+                                        <td colspan="6" class="text-center py-3 text-muted">Belum ada data transaksi.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SDK Firebase (Modular v9/v10) -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { 
             getAuth, 
-            signInAnonymously, 
-            signInWithCustomToken, 
-            signInWithEmailAndPassword, 
             createUserWithEmailAndPassword, 
-            signOut, 
-            onAuthStateChanged 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+            signInWithEmailAndPassword, 
+            onAuthStateChanged, 
+            signOut 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { 
             getFirestore, 
             doc, 
             setDoc, 
             collection, 
+            addDoc, 
             onSnapshot, 
-            deleteDoc
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+            deleteDoc, 
+            query, 
+            orderBy, 
+            serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Global Variables
-        const STORAGE_KEY = "trade_master_journal_v2";
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-trading-journal';
-        
-        let firebaseConfig = {
-            apiKey: "dummy",
-            authDomain: "dummy.firebaseapp.com",
-            projectId: "dummy",
-            storageBucket: "dummy.appspot.com",
-            messagingSenderId: "123456",
-            appId: "1:123456:web:123456"
+        // ==========================================
+        // CONFIG FIREBASE (Ganti dengan Config milikmu)
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAeWvYIS_-SRSc-AINGNa7hTDOGmraxU7o",
+            authDomain: "trading-journal-ecfcd.firebaseapp.com",
+            projectId: "trading-journal-ecfcd",
+            storageBucket: "trading-journal-ecfcd.firebasestorage.app",
+            messagingSenderId: "282320283613",
+            appId: "1:282320283613:web:058ed10592705d6d453834"
+			measurementId: "G-Q2GV8YF6ME"
         };
 
-        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-            try { firebaseConfig = JSON.parse(__firebase_config); } catch(e){}
-        }
-
+        // Inisialisasi Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // App State
-        window.appState = {
-            currentUser: null,
-            trades: [],
-            initialCapital: 1000
+        let isSignUpMode = false;
+        let currentUser = null;
+        let chartInstance = null;
+        let unsubscribeTrades = null;
+
+        // Toggle antara Login dan Sign Up
+        window.toggleAuthMode = function(signUp) {
+            isSignUpMode = signUp;
+            const title = document.getElementById('authTitle');
+            const submitBtn = document.getElementById('btnSubmitAuth');
+            const toggleText = document.getElementById('authToggleText');
+            const alertBox = document.getElementById('authAlert');
+
+            alertBox.classList.add('d-none');
+
+            if (isSignUpMode) {
+                title.innerText = "Daftar Akun Baru";
+                submitBtn.innerText = "Daftar";
+                toggleText.innerHTML = 'Sudah punya akun? <a href="#" onclick="toggleAuthMode(false)">Masuk di sini</a>';
+            } else {
+                title.innerText = "Masuk ke Jurnal Trading";
+                submitBtn.innerText = "Masuk";
+                toggleText.innerHTML = 'Belum punya akun? <a href="#" onclick="toggleAuthMode(true)">Daftar sekarang</a>';
+            }
         };
 
-        const defaultSampleTrades = [
-            {
-                id: "trd-001",
-                date: "2026-03-01T10:00",
-                symbol: "EURUSD",
-                category: "Forex",
-                direction: "LONG",
-                status: "WIN",
-                size: 0.10,
-                entry: 1.08200,
-                exit: 1.08700,
-                stoploss: 1.08000,
-                takeprofit: 1.08700,
-                pnl: 50.00,
-                strategy: "Supply & Demand Rejection",
-                emotion: "Disiplin (Sesuai Rencana)",
-                notes: "Setup bersih di timeframe H1.",
-                chartUrl: ""
-            },
-            {
-                id: "trd-002",
-                date: "2026-03-03T14:30",
-                symbol: "XAUUSD",
-                category: "Commodity",
-                direction: "SHORT",
-                status: "LOSS",
-                size: 0.05,
-                entry: 2040.00,
-                exit: 2048.00,
-                stoploss: 2048.00,
-                takeprofit: 2020.00,
-                pnl: -40.00,
-                strategy: "Breakout Retest",
-                emotion: "FOMO (Takut Ketinggalan)",
-                notes: "Masuk terlalu cepat sebelum candle H4 close.",
-                chartUrl: ""
-            },
-            {
-                id: "trd-003",
-                date: "2026-03-06T09:15",
-                symbol: "BTCUSD",
-                category: "Crypto",
-                direction: "LONG",
-                status: "WIN",
-                size: 0.02,
-                entry: 62000.00,
-                exit: 65000.00,
-                stoploss: 60500.00,
-                takeprofit: 65000.00,
-                pnl: 60.00,
-                strategy: "Trend Continuation",
-                emotion: "Disiplin (Sesuai Rencana)",
-                notes: "Hold sesuai TP awal.",
-                chartUrl: ""
-            }
-        ];
+        // Handle Login / Register
+        window.handleAuth = async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const alertBox = document.getElementById('authAlert');
 
-        window.loadAppData = function() {
+            alertBox.classList.add('d-none');
+
             try {
-                const stored = localStorage.getItem(STORAGE_KEY);
-                if (stored) {
-                    window.appState.trades = JSON.parse(stored);
+                if (isSignUpMode) {
+                    // Sign Up
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+
+                    // Buat dokumen profil pengguna di Firestore
+                    await setDoc(doc(db, "users", user.uid), {
+                        email: user.email,
+                        createdAt: serverTimestamp()
+                    });
                 } else {
-                    window.appState.trades = [...defaultSampleTrades];
+                    // Login
+                    await signInWithEmailAndPassword(auth, email, password);
                 }
-            } catch (e) {
-                console.error("Gagal memuat localStorage:", e);
-                window.appState.trades = [...defaultSampleTrades];
-            }
-            window.renderAllViews();
-        };
-
-        window.saveAppDataLocally = function() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(window.appState.trades));
-            } catch (e) {
-                console.error("Gagal simpan lokal:", e);
+            } catch (error) {
+                alertBox.innerText = error.message;
+                alertBox.classList.remove('d-none');
             }
         };
 
-        // Firebase Sync Engine
-        let unsubscribeFirestore = null;
+        // Logout
+        window.logoutUser = function() {
+            signOut(auth);
+        };
 
-        async function initAuthAndFirestore() {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInWithAnonymouslyIfNeeded();
-                }
-            } catch (err) {
-                console.warn("Auth initialization error, fallback guest mode:", err);
-            }
-        }
-
-        async function signInWithAnonymouslyIfNeeded() {
-            if (!auth.currentUser) {
-                await signInAnonymously(auth);
-            }
-        }
-
+        // Observer Status Otentikasi
         onAuthStateChanged(auth, (user) => {
-            window.appState.currentUser = user;
-            const badgeText = document.getElementById("syncText");
-            const badgeDot = document.getElementById("syncDot");
-            const userLabel = document.getElementById("userDisplayName");
-            const authBtnText = document.getElementById("authBtnText");
+            currentUser = user;
+            const authSec = document.getElementById('authSection');
+            const dashSec = document.getElementById('dashboardSection');
+            const userStatus = document.getElementById('userStatus');
+            const btnLogout = document.getElementById('btnLogout');
+            const userEmail = document.getElementById('userEmail');
 
             if (user) {
-                const isGuest = user.isAnonymous;
-                userLabel.textContent = isGuest ? `Tamu (${user.uid.substring(0, 6)})` : (user.email || 'User Cloud');
-                authBtnText.textContent = isGuest ? 'Login / Daftar' : 'Akun Saya';
-                
-                badgeDot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
-                badgeText.textContent = "Tersinkron Cloud";
+                // User sedang Login
+                authSec.classList.add('d-none');
+                dashSec.classList.remove('d-none');
+                userStatus.classList.remove('d-none');
+                btnLogout.classList.remove('d-none');
+                userEmail.innerText = user.email;
 
-                // Setup Firestore Snapshot Listener
-                const userTradesRef = collection(db, 'artifacts', appId, 'users', user.uid, 'trades');
-                
-                if (unsubscribeFirestore) unsubscribeFirestore();
-
-                unsubscribeFirestore = onSnapshot(userTradesRef, (snapshot) => {
-                    if (!snapshot.empty) {
-                        const cloudTrades = [];
-                        snapshot.forEach(doc => {
-                            cloudTrades.push({ id: doc.id, ...doc.data() });
-                        });
-                        window.appState.trades = cloudTrades;
-                        window.saveAppDataLocally();
-                        window.renderAllViews();
-                    } else if (window.appState.trades.length > 0) {
-                        // Push initial local trades to new user cloud doc
-                        window.appState.trades.forEach(t => {
-                            setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'trades', t.id), t);
-                        });
-                    }
-                }, (error) => {
-                    console.error("Firestore sync error:", error);
-                });
-
+                // Load Data Trades dari Firestore secara Realtime
+                loadTrades(user.uid);
             } else {
-                userLabel.textContent = "Offline Mode";
-                authBtnText.textContent = "Login";
-                badgeDot.className = "w-2 h-2 rounded-full bg-amber-400";
-                badgeText.textContent = "Lokal Saja";
+                // User Logout
+                if (unsubscribeTrades) unsubscribeTrades();
+                authSec.classList.remove('d-none');
+                dashSec.classList.add('d-none');
+                userStatus.classList.add('d-none');
+                btnLogout.classList.add('d-none');
+                
+                // Reset UI
+                resetDashboard();
             }
         });
 
-        window.saveTradeToCloud = async function(trade) {
-            const user = auth.currentUser;
-            if (!user) return;
-            try {
-                await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'trades', trade.id), trade);
-            } catch (e) {
-                console.error("Cloud save failed:", e);
-            }
-        };
-
-        window.deleteTradeFromCloud = async function(tradeId) {
-            const user = auth.currentUser;
-            if (!user) return;
-            try {
-                await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'trades', tradeId));
-            } catch (e) {
-                console.error("Cloud delete failed:", e);
-            }
-        };
-
-        // Auth handlers exposed to window
-        window.handleAuthSubmit = async function(e) {
+        // Simpan Data Trade Baru ke Firestore
+        window.saveTrade = async function(e) {
             e.preventDefault();
-            const email = document.getElementById("authEmail").value;
-            const password = document.getElementById("authPassword").value;
+            if (!currentUser) return;
+
+            const pair = document.getElementById('pair').value.toUpperCase();
+            const type = document.getElementById('type').value;
+            const pnl = parseFloat(document.getElementById('pnl').value);
+            const notes = document.getElementById('notes').value;
 
             try {
-                await signInWithEmailAndPassword(auth, email, password);
-                showToast("Berhasil login!", "success");
-                closeAuthModal();
+                await addDoc(collection(db, "users", currentUser.uid, "trades"), {
+                    pair: pair,
+                    type: type,
+                    pnl: pnl,
+                    notes: notes,
+                    timestamp: serverTimestamp()
+                });
+
+                document.getElementById('tradeForm').reset();
             } catch (err) {
-                if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-                    try {
-                        await createUserWithEmailAndPassword(auth, email, password);
-                        showToast("Akun baru berhasil dibuat!", "success");
-                        closeAuthModal();
-                    } catch (createErr) {
-                        showToast("Gagal membuat akun: " + createErr.message, "error");
-                    }
-                } else {
-                    showToast("Login gagal: " + err.message, "error");
-                }
+                alert("Gagal menyimpan data: " + err.message);
             }
         };
 
-        window.loginAnonymously = async function() {
+        // Hapus Trade
+        window.deleteTrade = async function(tradeId) {
+            if (!currentUser || !confirm("Yakin ingin menghapus transaksi ini?")) return;
             try {
-                await signInAnonymously(auth);
-                showToast("Masuk sebagai Tamu", "info");
-                closeAuthModal();
-            } catch (e) {
-                showToast("Gagal masuk sebagai tamu", "error");
+                await deleteDoc(doc(db, "users", currentUser.uid, "trades", tradeId));
+            } catch (err) {
+                alert("Gagal menghapus: " + err.message);
             }
         };
 
-        window.handleLogout = async function() {
-            try {
-                await signOut(auth);
-                showToast("Berhasil logout", "info");
-                closeAuthModal();
-            } catch (e) {
-                showToast("Gagal logout", "error");
-            }
-        };
+        // Mendengarkan Perubahan Data Firestore (Realtime)
+        function loadTrades(userId) {
+            const q = query(
+                collection(db, "users", userId, "trades"), 
+                orderBy("timestamp", "asc")
+            );
 
-        // Init on start
-        initAuthAndFirestore();
-        window.loadAppData();
-    </script>
+            unsubscribeTrades = onSnapshot(q, (snapshot) => {
+                const trades = [];
+                snapshot.forEach((doc) => {
+                    trades.push({ id: doc.id, ...doc.data() });
+                });
 
-    <script>
-        // Global Chart Instances
-        let equityChartInstance = null;
-        let strategyChartInstance = null;
-        let emotionChartInstance = null;
-
-        // Toast Helper
-        function showToast(msg, type = 'info') {
-            const container = document.getElementById("toastContainer");
-            const toast = document.createElement("div");
-            const colors = {
-                success: "bg-emerald-600 text-white",
-                error: "bg-rose-600 text-white",
-                info: "bg-slate-800 text-slate-100 border border-slate-700"
-            };
-            toast.className = `px-4 py-3 rounded-xl shadow-xl text-xs font-medium flex items-center space-x-2 transition-all duration-300 transform translate-y-2 opacity-0 ${colors[type] || colors.info}`;
-            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-circle-exclamation' : 'fa-info-circle'}"></i> <span>${msg}</span>`;
-            
-            container.appendChild(toast);
-            requestAnimationFrame(() => {
-                toast.classList.remove("translate-y-2", "opacity-0");
+                renderDashboard(trades);
             });
-
-            setTimeout(() => {
-                toast.classList.add("opacity-0");
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
         }
 
-        function switchTab(tabName) {
-            ['dashboard', 'trades', 'risk-calc', 'analytics'].forEach(t => {
-                const btn = document.getElementById(`tab-${t}`);
-                const view = document.getElementById(`view-${t}`);
-                if (t === tabName) {
-                    btn.className = "tab-btn active px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 bg-brand-600 text-white shadow-md";
-                    view.classList.remove("hidden");
-                } else {
-                    btn.className = "tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center space-x-2 text-slate-400 hover:text-white hover:bg-slate-800";
-                    view.classList.add("hidden");
-                }
-            });
+        // Render Tabel, Statistik & Grafik
+        function renderDashboard(trades) {
+            const tbody = document.getElementById('tradeTableBody');
+            tbody.innerHTML = '';
 
-            if (tabName === 'dashboard') updateEquityChart();
-            if (tabName === 'analytics') updateAnalyticsCharts();
-            if (tabName === 'risk-calc') calculatePositionSize();
-        }
-
-        function renderAllViews() {
-            updateDashboardStats();
-            renderTradesTable();
-            updateEquityChart();
-            updateAnalyticsCharts();
-        }
-
-        function updateDashboardStats() {
-            const trades = window.appState.trades || [];
-            const initialCap = parseFloat(document.getElementById("initialCapitalInput")?.value) || 1000;
-
-            let totalPnL = 0;
+            let totalTrades = trades.length;
             let wins = 0;
-            let losses = 0;
-            let totalGrossWin = 0;
-            let totalGrossLoss = 0;
-            let openCount = 0;
+            let totalPnL = 0;
+            let totalWinAmount = 0;
+            let totalLossAmount = 0;
 
-            trades.forEach(t => {
-                if (t.status === 'OPEN') {
-                    openCount++;
-                } else {
-                    const pnl = parseFloat(t.pnl) || 0;
+            const chartLabels = [];
+            const chartData = [];
+            let cumulativePnL = 0;
+
+            if (trades.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">Belum ada data transaksi.</td></tr>';
+            } else {
+                trades.forEach((trade) => {
+                    const pnl = trade.pnl || 0;
                     totalPnL += pnl;
+                    cumulativePnL += pnl;
+
                     if (pnl > 0) {
                         wins++;
-                        totalGrossWin += pnl;
-                    } else if (pnl < 0) {
-                        losses++;
-                        totalGrossLoss += Math.abs(pnl);
+                        totalWinAmount += pnl;
+                    } else {
+                        totalLossAmount += Math.abs(pnl);
                     }
-                }
-            });
 
-            const totalClosed = wins + losses;
-            const winRate = totalClosed > 0 ? ((wins / totalClosed) * 100).toFixed(1) : "0.0";
-            const profitFactor = totalGrossLoss > 0 ? (totalGrossWin / totalGrossLoss).toFixed(2) : (totalGrossWin > 0 ? "MAX" : "0.00");
-            const returnPercent = ((totalPnL / initialCap) * 100).toFixed(1);
+                    const dateStr = trade.timestamp ? new Date(trade.timestamp.toDate()).toLocaleDateString('id-ID') : '-';
+                    chartLabels.push(dateStr);
+                    chartData.push(cumulativePnL);
 
-            document.getElementById("statTotalPnL").textContent = `${totalPnL >= 0 ? '+' : ''}$${totalPnL.toFixed(2)}`;
-            document.getElementById("statTotalPnL").className = `text-xl sm:text-2xl font-extrabold ${totalPnL >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
-            document.getElementById("statPnLPercent").textContent = `${returnPercent}% dari modal $${initialCap}`;
-            
-            document.getElementById("statWinRate").textContent = `${winRate}%`;
-            document.getElementById("statWinLossCount").textContent = `${wins} Menang / ${losses} Kalah`;
-            
-            document.getElementById("statProfitFactor").textContent = profitFactor;
-            document.getElementById("statTotalTrades").textContent = trades.length;
-            document.getElementById("statOpenTrades").textContent = `${openCount} Berjalan`;
+                    const pnlClass = pnl >= 0 ? 'text-success fw-bold' : 'text-danger fw-bold';
+                    const typeBadge = trade.type === 'BUY' ? 'bg-primary' : 'bg-warning text-dark';
 
-            // Recent Trades Table Limit 5
-            const recentBody = document.getElementById("recentTradesTableBody");
-            recentBody.innerHTML = "";
-
-            const sorted = [...trades].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
-            if (sorted.length === 0) {
-                recentBody.innerHTML = `<tr><td colspan="8" class="text-center p-4 text-slate-500">Belum ada data transaksi</td></tr>`;
-                return;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${dateStr}</td>
+                            <td><strong>${trade.pair}</strong></td>
+                            <td><span class="badge ${typeBadge}">${trade.type}</span></td>
+                            <td class="${pnlClass}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}</td>
+                            <td><small>${trade.notes || '-'}</small></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteTrade('${trade.id}')">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
             }
 
-            sorted.forEach(t => {
-                const tr = document.createElement("tr");
-                const pnl = parseFloat(t.pnl) || 0;
-                tr.innerHTML = `
-                    <td class="p-3 font-mono">${t.date ? t.date.replace('T', ' ') : '-'}</td>
-                    <td class="p-3 font-bold text-slate-100">${t.symbol}</td>
-                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${t.direction === 'LONG' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">${t.direction}</span></td>
-                    <td class="p-3 font-mono">${t.size}</td>
-                    <td class="p-3 font-mono">${t.entry || '-'}</td>
-                    <td class="p-3 font-mono">${t.exit || '-'}</td>
-                    <td class="p-3 font-mono font-bold ${pnl > 0 ? 'text-emerald-400' : pnl < 0 ? 'text-rose-400' : 'text-slate-400'}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}</td>
-                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${getStatusBadgeClass(t.status)}">${t.status}</span></td>
-                `;
-                recentBody.appendChild(tr);
-            });
+            // Hitung Statistik
+            const winRate = totalTrades > 0 ? ((wins / totalTrades) * 100).toFixed(1) : 0;
+            const profitFactor = totalLossAmount > 0 ? (totalWinAmount / totalLossAmount).toFixed(2) : (totalWinAmount > 0 ? "∞" : "0.00");
+
+            document.getElementById('statTotal').innerText = totalTrades;
+            document.getElementById('statWinRate').innerText = `${winRate}%`;
+            document.getElementById('statPnL').innerText = `$${totalPnL.toFixed(2)}`;
+            document.getElementById('statPF').innerText = profitFactor;
+
+            // Render Grafik
+            updateChart(chartLabels, chartData);
         }
 
-        function getStatusBadgeClass(status) {
-            switch(status) {
-                case 'WIN': return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
-                case 'LOSS': return 'bg-rose-500/20 text-rose-400 border border-rose-500/30';
-                case 'OPEN': return 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
-                default: return 'bg-slate-700 text-slate-300';
-            }
-        }
+        // Render / Update Chart.js
+        function updateChart(labels, data) {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            if (chartInstance) chartInstance.destroy();
 
-        function renderTradesTable() {
-            const trades = window.appState.trades || [];
-            const search = (document.getElementById("tradeSearchInput")?.value || "").toLowerCase();
-            const statusFilter = document.getElementById("filterStatus")?.value || "ALL";
-            const categoryFilter = document.getElementById("filterCategory")?.value || "ALL";
-
-            const filtered = trades.filter(t => {
-                const matchSearch = (t.symbol || '').toLowerCase().includes(search) || (t.strategy || '').toLowerCase().includes(search);
-                const matchStatus = statusFilter === 'ALL' || t.status === statusFilter;
-                const matchCat = categoryFilter === 'ALL' || t.category === categoryFilter;
-                return matchSearch && matchStatus && matchCat;
-            }).sort((a,b) => new Date(b.date) - new Date(a.date));
-
-            const tbody = document.getElementById("fullTradesTableBody");
-            const emptyState = document.getElementById("emptyState");
-
-            tbody.innerHTML = "";
-
-            if (filtered.length === 0) {
-                emptyState.classList.remove("hidden");
-                return;
-            }
-            emptyState.classList.add("hidden");
-
-            filtered.forEach(t => {
-                const tr = document.createElement("tr");
-                const pnl = parseFloat(t.pnl) || 0;
-                tr.innerHTML = `
-                    <td class="p-3 font-mono whitespace-nowrap">${t.date ? t.date.replace('T', ' ') : '-'}</td>
-                    <td class="p-3 font-bold text-slate-100 whitespace-nowrap">${t.symbol} <span class="text-[10px] font-normal text-slate-500">(${t.category || 'Forex'})</span></td>
-                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${t.direction === 'LONG' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}">${t.direction}</span></td>
-                    <td class="p-3 font-mono">${t.size}</td>
-                    <td class="p-3 font-mono">${t.entry || '-'}</td>
-                    <td class="p-3 font-mono text-rose-400">${t.stoploss || '-'}</td>
-                    <td class="p-3 font-mono text-emerald-400">${t.takeprofit || '-'}</td>
-                    <td class="p-3 font-mono">${t.exit || '-'}</td>
-                    <td class="p-3 font-mono font-bold ${pnl > 0 ? 'text-emerald-400' : pnl < 0 ? 'text-rose-400' : 'text-slate-400'}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}</td>
-                    <td class="p-3">
-                        <div class="font-medium text-slate-200">${t.strategy || '-'}</div>
-                        <div class="text-[10px] text-slate-400">${t.emotion || '-'}</div>
-                    </td>
-                    <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${getStatusBadgeClass(t.status)}">${t.status}</span></td>
-                    <td class="p-3 text-right whitespace-nowrap space-x-1">
-                        ${t.chartUrl ? `<a href="${t.chartUrl}" target="_blank" class="p-1.5 text-blue-400 hover:text-blue-300" title="Lihat Chart"><i class="fa-solid fa-chart-area"></i></a>` : ''}
-                        <button onclick="editTrade('${t.id}')" class="p-1.5 text-slate-400 hover:text-amber-400" title="Edit"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="deleteTrade('${t.id}')" class="p-1.5 text-slate-400 hover:text-rose-400" title="Hapus"><i class="fa-solid fa-trash"></i></button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function calculatePositionSize() {
-            const balance = parseFloat(document.getElementById("calcAccountBalance")?.value) || 1000;
-            const riskPct = parseFloat(document.getElementById("calcRiskPercent")?.value) || 1;
-            const slPips = parseFloat(document.getElementById("calcStopLossPips")?.value) || 20;
-
-            const pairSelect = document.getElementById("calcCurrencyPair");
-            const selectedOption = pairSelect.options[pairSelect.selectedIndex];
-            const pipValuePerStandardLot = parseFloat(selectedOption.getAttribute("data-pip")) || 10;
-
-            const riskMoney = (balance * (riskPct / 100));
-
-            let rawLot = riskMoney / (slPips * pipValuePerStandardLot);
-            if (rawLot < 0.01) rawLot = 0.01;
-
-            const finalLot = rawLot.toFixed(2);
-            const estPipVal = (rawLot * pipValuePerStandardLot).toFixed(2);
-
-            document.getElementById("calcOutputRiskMoney").textContent = `$${riskMoney.toFixed(2)}`;
-            document.getElementById("calcOutputLotSize").textContent = `${finalLot} Lot`;
-            document.getElementById("calcOutputPipValue").textContent = `Nilai Estimasi: ~$${estPipVal} / Pip`;
-        }
-
-        function applyCalcToNewTrade() {
-            const pairSelect = document.getElementById("calcCurrencyPair");
-            const symbol = pairSelect.value;
-            const category = pairSelect.options[pairSelect.selectedIndex].getAttribute("data-cat") || "Forex";
-            
-            const lotText = document.getElementById("calcOutputLotSize").textContent;
-            const lotValue = parseFloat(lotText) || 0.01;
-
-            openTradeModal();
-            document.getElementById("formSymbol").value = symbol;
-            document.getElementById("formCategory").value = category;
-            document.getElementById("formSize").value = lotValue;
-
-            showToast("Data dari kalkulator disalin ke form!", "success");
-        }
-
-        function openTradeModal(editId = null) {
-            const modal = document.getElementById("tradeModal");
-            const form = document.getElementById("tradeForm");
-            form.reset();
-
-            document.getElementById("formTradeId").value = "";
-            document.getElementById("formDate").value = new Date().toISOString().slice(0, 16);
-
-            if (editId) {
-                const trade = window.appState.trades.find(t => t.id === editId);
-                if (trade) {
-                    document.getElementById("tradeModalTitle").innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-400"></i> <span>Edit Transaksi</span>`;
-                    document.getElementById("formTradeId").value = trade.id;
-                    document.getElementById("formDate").value = trade.date || "";
-                    document.getElementById("formSymbol").value = trade.symbol || "";
-                    document.getElementById("formCategory").value = trade.category || "Forex";
-                    document.getElementById("formDirection").value = trade.direction || "LONG";
-                    document.getElementById("formSize").value = trade.size || 0.01;
-                    document.getElementById("formStatus").value = trade.status || "OPEN";
-                    document.getElementById("formEntry").value = trade.entry || "";
-                    document.getElementById("formStopLoss").value = trade.stoploss || "";
-                    document.getElementById("formTakeProfit").value = trade.takeprofit || "";
-                    document.getElementById("formExit").value = trade.exit || "";
-                    document.getElementById("formPnl").value = trade.pnl || 0;
-                    document.getElementById("formStrategy").value = trade.strategy || "";
-                    document.getElementById("formEmotion").value = trade.emotion || "";
-                    document.getElementById("formChartUrl").value = trade.chartUrl || "";
-                    document.getElementById("formNotes").value = trade.notes || "";
-                }
-            } else {
-                document.getElementById("tradeModalTitle").innerHTML = `<i class="fa-solid fa-plus-circle text-brand-400"></i> <span>Catat Transaksi Baru</span>`;
-            }
-
-            modal.classList.remove("hidden");
-        }
-
-        function closeTradeModal() {
-            document.getElementById("tradeModal").classList.add("hidden");
-        }
-
-        function handleTradeSubmit(e) {
-            e.preventDefault();
-            const id = document.getElementById("formTradeId").value || "trd-" + Date.now();
-            
-            const tradeData = {
-                id: id,
-                date: document.getElementById("formDate").value,
-                symbol: document.getElementById("formSymbol").value.toUpperCase(),
-                category: document.getElementById("formCategory").value,
-                direction: document.getElementById("formDirection").value,
-                size: parseFloat(document.getElementById("formSize").value) || 0.01,
-                status: document.getElementById("formStatus").value,
-                entry: parseFloat(document.getElementById("formEntry").value) || null,
-                stoploss: parseFloat(document.getElementById("formStopLoss").value) || null,
-                takeprofit: parseFloat(document.getElementById("formTakeProfit").value) || null,
-                exit: parseFloat(document.getElementById("formExit").value) || null,
-                pnl: parseFloat(document.getElementById("formPnl").value) || 0,
-                strategy: document.getElementById("formStrategy").value || "General",
-                emotion: document.getElementById("formEmotion").value,
-                chartUrl: document.getElementById("formChartUrl").value,
-                notes: document.getElementById("formNotes").value
-            };
-
-            const existingIndex = window.appState.trades.findIndex(t => t.id === id);
-            if (existingIndex >= 0) {
-                window.appState.trades[existingIndex] = tradeData;
-            } else {
-                window.appState.trades.push(tradeData);
-            }
-
-            window.saveAppDataLocally();
-            if (window.saveTradeToCloud) window.saveTradeToCloud(tradeData);
-
-            closeTradeModal();
-            renderAllViews();
-            showToast("Transaksi berhasil disimpan!", "success");
-        }
-
-        function editTrade(id) {
-            openTradeModal(id);
-        }
-
-        function deleteTrade(id) {
-            if (confirm("Apakah Anda yakin ingin menghapus catatan transaksi ini?")) {
-                window.appState.trades = window.appState.trades.filter(t => t.id !== id);
-                window.saveAppDataLocally();
-                if (window.deleteTradeFromCloud) window.deleteTradeFromCloud(id);
-                renderAllViews();
-                showToast("Transaksi telah dihapus", "info");
-            }
-        }
-
-        function updateEquityChart() {
-            const ctx = document.getElementById("equityChart")?.getContext("2d");
-            if (!ctx) return;
-
-            const trades = [...(window.appState.trades || [])].sort((a,b) => new Date(a.date) - new Date(b.date));
-            const initialCap = parseFloat(document.getElementById("initialCapitalInput")?.value) || 1000;
-
-            let currentCap = initialCap;
-            const labels = ["Awal"];
-            const dataPoints = [initialCap];
-
-            trades.forEach((t, index) => {
-                if (t.status !== 'OPEN') {
-                    currentCap += (parseFloat(t.pnl) || 0);
-                    labels.push(`Trade #${index+1} (${t.symbol})`);
-                    dataPoints.push(currentCap);
-                }
-            });
-
-            if (equityChartInstance) equityChartInstance.destroy();
-
-            equityChartInstance = new Chart(ctx, {
+            chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Modal ($)',
-                        data: dataPoints,
-                        borderColor: '#22c55e',
-                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
-                        borderWidth: 2,
+                        label: 'Kumulatif P/L ($)',
+                        data: data,
+                        borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
                         fill: true,
-                        tension: 0.2,
-                        pointBackgroundColor: '#22c55e',
+                        tension: 0.2
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
-                        x: {
-                            ticks: { color: '#94a3b8', font: { size: 10 } },
-                            grid: { color: '#334155' }
-                        },
-                        y: {
-                            ticks: { color: '#94a3b8', font: { size: 10 } },
-                            grid: { color: '#334155' }
-                        }
+                        y: { beginAtZero: false }
                     }
                 }
             });
         }
 
-        function updateAnalyticsCharts() {
-            const trades = window.appState.trades || [];
-            
-            const strategyCounts = {};
-            trades.forEach(t => {
-                const strat = t.strategy || 'Unspecified';
-                strategyCounts[strat] = (strategyCounts[strat] || 0) + 1;
-            });
-
-            const stratCtx = document.getElementById("strategyChart")?.getContext("2d");
-            if (stratCtx) {
-                if (strategyChartInstance) strategyChartInstance.destroy();
-                strategyChartInstance = new Chart(stratCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: Object.keys(strategyCounts),
-                        datasets: [{
-                            label: 'Jumlah Frekuensi',
-                            data: Object.values(strategyCounts),
-                            backgroundColor: '#6366f1'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
-                            y: { ticks: { color: '#94a3b8', precision: 0 }, grid: { color: '#334155' } }
-                        }
-                    }
-                });
-            }
-
-            const emotionCounts = {};
-            trades.forEach(t => {
-                const emo = t.emotion || 'Disiplin';
-                emotionCounts[emo] = (emotionCounts[emo] || 0) + 1;
-            });
-
-            const emoCtx = document.getElementById("emotionChart")?.getContext("2d");
-            if (emoCtx) {
-                if (emotionChartInstance) emotionChartInstance.destroy();
-                emotionChartInstance = new Chart(emoCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: Object.keys(emotionCounts),
-                        datasets: [{
-                            data: Object.values(emotionCounts),
-                            backgroundColor: ['#22c55e', '#f43f5e', '#eab308', '#a855f7', '#3b82f6']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 11 } } }
-                        }
-                    }
-                });
-            }
+        function resetDashboard() {
+            document.getElementById('tradeTableBody').innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">Belum ada data transaksi.</td></tr>';
+            document.getElementById('statTotal').innerText = "0";
+            document.getElementById('statWinRate').innerText = "0%";
+            document.getElementById('statPnL').innerText = "$0.00";
+            document.getElementById('statPF').innerText = "0.00";
+            if (chartInstance) chartInstance.destroy();
         }
-
-        function exportTradesCSV() {
-            const trades = window.appState.trades || [];
-            if (trades.length === 0) return showToast("Tidak ada data untuk diexport", "info");
-
-            const headers = ["ID", "Date", "Symbol", "Category", "Direction", "Size", "Entry", "Exit", "StopLoss", "TakeProfit", "PnL", "Status", "Strategy", "Emotion", "Notes"];
-            const rows = trades.map(t => [
-                t.id, t.date, t.symbol, t.category, t.direction, t.size, t.entry, t.exit, t.stoploss, t.takeprofit, t.pnl, t.status, `"${t.strategy}"`, `"${t.emotion}"`, `"${t.notes}"`
-            ]);
-
-            const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `trading_journal_${new Date().toISOString().slice(0,10)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-        }
-
-        function importTradesJSON(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const imported = JSON.parse(e.target.result);
-                    if (Array.isArray(imported)) {
-                        window.appState.trades = imported;
-                        window.saveAppDataLocally();
-                        renderAllViews();
-                        showToast("Data jurnal berhasil diimport!", "success");
-                    }
-                } catch(err) {
-                    showToast("File JSON tidak valid", "error");
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        function openAuthModal() {
-            document.getElementById("authModal").classList.remove("hidden");
-        }
-        function closeAuthModal() {
-            document.getElementById("authModal").classList.add("hidden");
-        }
-
-        window.onload = function() {
-            calculatePositionSize();
-        };
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
