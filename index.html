@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Journal Professional</title>
+    <title>Trading Journal Professional (Firebase)</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -114,7 +114,7 @@
             </div>
 
             <button type="button" id="btnGuest" class="btn btn-outline-secondary w-100">
-                <i class="fas fa-user-clock me-1"></i> Masuk Mode Tamu (Lokal)
+                <i class="fas fa-user-clock me-1"></i> Masuk Mode Tamu (Anonim)
             </button>
         </div>
     </div>
@@ -127,8 +127,8 @@
                     <i class="fas fa-chart-line me-2 text-primary"></i>Trading Journal
                 </span>
                 <div class="d-flex align-items-center gap-3">
-                    <span id="syncStatus" class="sync-badge bg-warning text-dark">
-                        <i class="fas fa-hdd me-1"></i> Penyimpanan Lokal
+                    <span id="syncStatus" class="sync-badge bg-success text-white">
+                        <i class="fas fa-cloud me-1"></i> Firebase Cloud Sync
                     </span>
                     <span id="userDisplay" class="text-muted small"></span>
                     <button type="button" id="btnLogout" class="btn btn-sm btn-outline-danger">
@@ -333,40 +333,84 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script>
+    <!-- FIREBASE SDK (MODULAR) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword, 
+            signInAnonymously, 
+            signOut, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            deleteDoc, 
+            doc, 
+            onSnapshot, 
+            query
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // CONFIG FIREBASE MILIK KAMU
+        const firebaseConfig = {
+            apiKey: "AIzaSyAeWvYIS_-SRSc-AINGNa7hTDOGmraxU7o",
+            authDomain: "trading-journal-ecfcd.firebaseapp.com",
+            projectId: "trading-journal-ecfcd",
+            storageBucket: "trading-journal-ecfcd.firebasestorage.app",
+            messagingSenderId: "282320283613",
+            appId: "1:282320283613:web:058ed10592705d6d453834",
+            measurementId: "G-Q2GV8YF6ME"
+        };
+
+        // Inisialisasi Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
         let currentUser = null;
         let trades = [];
         let equityChartInstance = null;
         let tradeModalInstance = null;
+        let unsubscribeTrades = null;
 
         document.addEventListener("DOMContentLoaded", () => {
             tradeModalInstance = new bootstrap.Modal(document.getElementById('tradeModal'));
 
-            // EVENT LISTENERS TOMBOL
-            document.getElementById('btnLogin').addEventListener('click', () => processAuth('login'));
-            document.getElementById('btnRegister').addEventListener('click', () => processAuth('register'));
-            document.getElementById('btnGuest').addEventListener('click', () => processGuest());
-            document.getElementById('btnLogout').addEventListener('click', () => logout());
+            // LISTENERS AUTH & ACTION
+            document.getElementById('btnLogin').addEventListener('click', handleLogin);
+            document.getElementById('btnRegister').addEventListener('click', handleRegister);
+            document.getElementById('btnGuest').addEventListener('click', handleGuest);
+            document.getElementById('btnLogout').addEventListener('click', handleLogout);
             document.getElementById('btnOpenModal').addEventListener('click', () => openModal());
-            document.getElementById('btnSaveTrade').addEventListener('click', () => saveTrade());
-            document.getElementById('btnApplyCalc').addEventListener('click', () => applyCalc());
+            document.getElementById('btnSaveTrade').addEventListener('click', saveTrade);
+            document.getElementById('btnApplyCalc').addEventListener('click', applyCalc);
 
-            // KALKULATOR LISTENERS
+            // LISTENERS KALKULATOR
             ['calcBalance', 'calcRiskPct', 'calcSLPips', 'calcPair'].forEach(id => {
                 document.getElementById(id).addEventListener('input', calculateRisk);
             });
 
-            checkActiveUser();
             calculateRisk();
         });
 
-        function checkActiveUser() {
-            const saved = localStorage.getItem('tj_active_user');
-            if (saved) {
-                currentUser = JSON.parse(saved);
-                loadDashboard();
+        // MONITOR STATUS LOGIN
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('authContainer').classList.add('d-none');
+                document.getElementById('appContainer').classList.remove('d-none');
+                document.getElementById('userDisplay').innerText = user.isAnonymous ? "Tamu (Anonim)" : user.email;
+                listenToTrades();
+            } else {
+                currentUser = null;
+                if (unsubscribeTrades) unsubscribeTrades();
+                document.getElementById('authContainer').classList.remove('d-none');
+                document.getElementById('appContainer').classList.add('d-none');
             }
-        }
+        });
 
         function showAlert(msg) {
             const el = document.getElementById('authAlert');
@@ -378,74 +422,87 @@
             document.getElementById('authAlert').classList.add('d-none');
         }
 
-        function processAuth(type) {
+        async function handleLogin() {
             hideAlert();
             const email = document.getElementById('authEmail').value.trim();
             const password = document.getElementById('authPassword').value.trim();
-
-            if (!email || !password) {
-                showAlert("Silakan masukkan email dan password.");
-                return;
-            }
-
-            if (password.length < 6) {
-                showAlert("Password minimal 6 karakter.");
-                return;
-            }
-
-            const userKey = 'tj_user_' + btoa(email).replace(/=/g, '');
-            const existingUser = localStorage.getItem(userKey);
-
-            if (type === 'register') {
-                if (existingUser) {
-                    showAlert("Email sudah terdaftar. Silakan klik Masuk.");
-                    return;
-                }
-                const newUser = { email: email, pass: password, uid: userKey };
-                localStorage.setItem(userKey, JSON.stringify(newUser));
-                loginUser(newUser);
-            } else {
-                if (!existingUser) {
-                    showAlert("Akun tidak ditemukan. Silakan klik Buat Akun Baru.");
-                    return;
-                }
-                const userObj = JSON.parse(existingUser);
-                if (userObj.pass !== password) {
-                    showAlert("Password salah.");
-                    return;
-                }
-                loginUser(userObj);
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+            } catch (err) {
+                showAlert("Login gagal: " + err.message);
             }
         }
 
-        function processGuest() {
-            const guestUser = { email: 'Tamu (Sesi Lokal)', uid: 'guest_' + Date.now() };
-            loginUser(guestUser);
+        async function handleRegister() {
+            hideAlert();
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value.trim();
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+            } catch (err) {
+                showAlert("Pendaftaran gagal: " + err.message);
+            }
         }
 
-        function loginUser(userObj) {
-            currentUser = userObj;
-            localStorage.setItem('tj_active_user', JSON.stringify(userObj));
-            loadDashboard();
+        async function handleGuest() {
+            hideAlert();
+            try {
+                await signInAnonymously(auth);
+            } catch (err) {
+                showAlert("Gagal masuk mode tamu: " + err.message);
+            }
         }
 
-        function logout() {
-            localStorage.removeItem('tj_active_user');
-            currentUser = null;
-            document.getElementById('authContainer').classList.remove('d-none');
-            document.getElementById('appContainer').classList.add('d-none');
+        async function handleLogout() {
+            await signOut(auth);
         }
 
-        function loadDashboard() {
-            document.getElementById('authContainer').classList.add('d-none');
-            document.getElementById('appContainer').classList.remove('d-none');
-            document.getElementById('userDisplay').innerText = currentUser.email;
-
-            const storedTrades = localStorage.getItem('tj_trades_' + currentUser.uid);
-            trades = storedTrades ? JSON.parse(storedTrades) : [];
-
-            renderAll();
+        // SYNC REALTIME FIRESTORE
+        function listenToTrades() {
+            if (!currentUser) return;
+            const q = query(collection(db, "users", currentUser.uid, "trades"));
+            
+            unsubscribeTrades = onSnapshot(q, (snapshot) => {
+                trades = [];
+                snapshot.forEach((doc) => {
+                    trades.push({ id: doc.id, ...doc.data() });
+                });
+                renderAll();
+            }, (error) => {
+                console.error("Firestore Error:", error);
+            });
         }
+
+        async function saveTrade() {
+            if (!currentUser) return;
+
+            const tradeData = {
+                date: document.getElementById('tradeDate').value,
+                symbol: document.getElementById('tradeSymbol').value.toUpperCase(),
+                direction: document.getElementById('tradeDirection').value,
+                size: parseFloat(document.getElementById('tradeSize').value) || 0.1,
+                entry: parseFloat(document.getElementById('tradeEntry').value) || null,
+                exit: parseFloat(document.getElementById('tradeExit').value) || null,
+                pnl: parseFloat(document.getElementById('tradePnL').value) || 0,
+                strategy: document.getElementById('tradeStrategy').value
+            };
+
+            try {
+                await addDoc(collection(db, "users", currentUser.uid, "trades"), tradeData);
+                tradeModalInstance.hide();
+            } catch (err) {
+                alert("Gagal menyimpan trade: " + err.message);
+            }
+        }
+
+        window.deleteTrade = async function(id) {
+            if (!confirm('Hapus transaksi ini dari Cloud?')) return;
+            try {
+                await deleteDoc(doc(db, "users", currentUser.uid, "trades", id));
+            } catch (err) {
+                alert("Gagal menghapus trade: " + err.message);
+            }
+        };
 
         function calculateRisk() {
             const bal = parseFloat(document.getElementById('calcBalance').value) || 0;
@@ -467,38 +524,8 @@
 
         function openModal() {
             document.getElementById('tradeForm').reset();
-            document.getElementById('tradeId').value = 'trd_' + Date.now();
             document.getElementById('tradeDate').value = new Date().toISOString().slice(0, 16);
             tradeModalInstance.show();
-        }
-
-        function saveTrade() {
-            const trade = {
-                id: document.getElementById('tradeId').value,
-                date: document.getElementById('tradeDate').value,
-                symbol: document.getElementById('tradeSymbol').value.toUpperCase(),
-                direction: document.getElementById('tradeDirection').value,
-                size: parseFloat(document.getElementById('tradeSize').value) || 0.1,
-                entry: parseFloat(document.getElementById('tradeEntry').value) || null,
-                exit: parseFloat(document.getElementById('tradeExit').value) || null,
-                pnl: parseFloat(document.getElementById('tradePnL').value) || 0,
-                strategy: document.getElementById('tradeStrategy').value
-            };
-
-            const idx = trades.findIndex(t => t.id === trade.id);
-            if (idx >= 0) trades[idx] = trade;
-            else trades.push(trade);
-
-            localStorage.setItem('tj_trades_' + currentUser.uid, JSON.stringify(trades));
-            tradeModalInstance.hide();
-            renderAll();
-        }
-
-        function deleteTrade(id) {
-            if (!confirm('Hapus transaksi ini?')) return;
-            trades = trades.filter(t => t.id !== id);
-            localStorage.setItem('tj_trades_' + currentUser.uid, JSON.stringify(trades));
-            renderAll();
         }
 
         function renderAll() {
@@ -512,7 +539,7 @@
             tbody.innerHTML = '';
 
             if (trades.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">Belum ada transaksi dicatat.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">Belum ada transaksi dicatat di Cloud.</td></tr>`;
                 return;
             }
 
