@@ -62,37 +62,41 @@
         </div>
     </nav>
 
-    <!-- SECTION 1: AUTHENTICATION -->
-    <div id="authSection" class="container">
-        <div class="card auth-card">
-            <div class="card-header text-center py-3">
-                <h5 class="mb-0" id="authTitle">Masuk ke Jurnal Trading</h5>
-            </div>
-            <div class="card-body p-4">
-                <div id="authAlert" class="alert alert-danger d-none" role="alert"></div>
-                <form id="authForm" onsubmit="handleAuth(event)">
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Alamat Email</label>
-                        <input type="email" class="form-control" id="email" placeholder="nama@email.com">
+<!-- SECTION 1: AUTHENTICATION -->
+<div id="authSection" class="container">
+    <div class="card auth-card">
+        <div class="card-header text-center py-3">
+            <h5 class="mb-0" id="authTitle">Masuk ke Jurnal Trading</h5>
+        </div>
+        <div class="card-body p-4">
+            <div id="authAlert" class="alert alert-danger d-none" role="alert"></div>
+            <form id="authForm" onsubmit="handleAuth(event)">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text">@</span>
+                        <input type="text" class="form-control" id="username" placeholder="Masukkan username" required pattern="[a-zA-Z0-9_]+" title="Hanya huruf, angka, dan underscore">
                     </div>
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Kata Sandi</label>
-                        <input type="password" class="form-control" id="password" placeholder="Minimal 6 karakter">
-                    </div>
-                    <button type="submit" id="btnSubmitAuth" class="btn btn-primary w-100 mb-2">
-                        <i class="fa-solid fa-right-to-bracket me-1"></i>Masuk
-                    </button>
-                </form>
-                <div class="divider"><span>atau</span></div>
-                <button class="btn btn-outline-secondary w-100 mb-3" onclick="handleGuestLogin()">
-                    <i class="fa-solid fa-user-secret me-1"></i>Masuk sebagai Guest (Tamu)
-                </button>
-                <div class="text-center">
-                    <small id="authToggleText">Belum punya akun? <a href="#" onclick="toggleAuthMode(true)">Daftar sekarang</a></small>
+                    <small class="text-muted">Hanya huruf, angka, atau garis bawah (_)</small>
                 </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Kata Sandi</label>
+                    <input type="password" class="form-control" id="password" placeholder="Minimal 6 karakter" required minlength="6">
+                </div>
+                <button type="submit" id="btnSubmitAuth" class="btn btn-primary w-100 mb-2">
+                    <i class="fa-solid fa-right-to-bracket me-1"></i>Masuk
+                </button>
+            </form>
+            <div class="divider"><span>atau</span></div>
+            <button class="btn btn-outline-secondary w-100 mb-3" onclick="handleGuestLogin()">
+                <i class="fa-solid fa-user-secret me-1"></i>Masuk sebagai Guest (Tamu)
+            </button>
+            <div class="text-center">
+                <small id="authToggleText">Belum punya akun? <a href="#" onclick="toggleAuthMode(true)">Daftar sekarang</a></small>
             </div>
         </div>
     </div>
+</div>
 
     <!-- SECTION 2: DASHBOARD TRADING -->
     <div id="dashboardSection" class="container mt-4 d-none">
@@ -577,20 +581,92 @@
             document.getElementById('authTitle').innerText = isSignUpMode ? "Daftar Akun Baru" : "Masuk ke Jurnal Trading";
             document.getElementById('btnSubmitAuth').innerText = isSignUpMode ? "Daftar" : "Masuk";
         };
+function usernameToEmail(username) {
+    return `${username.toLowerCase().trim()}@journal.internal`;
+}
 
-        window.handleAuth = async function(e) {
-            e.preventDefault();
-            hideErrorAlert();
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            try {
-                if (isSignUpMode) {
-                    await createUserWithEmailAndPassword(auth, email, password);
-                } else {
-                    await signInWithEmailAndPassword(auth, email, password);
-                }
-            } catch (err) { showErrorAlert(err.message); }
-        };
+window.handleAuth = async function(e) {
+    e.preventDefault();
+    hideErrorAlert();
+    
+    const rawUsername = document.getElementById('username').value.trim().toLowerCase();
+    const password = document.getElementById('password').value;
+    
+    // Validasi format username (tanpa spasi / karakter khusus)
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+    if (!usernameRegex.test(rawUsername)) {
+        showErrorAlert("Username hanya boleh berisi huruf, angka, dan underscore (_).");
+        return;
+    }
+
+    const virtualEmail = usernameToEmail(rawUsername);
+
+    try {
+        if (isSignUpMode) {
+            // 1. Cek apakah Username sudah pernah terdaftar di Firestore
+            const usernameDocRef = doc(db, "usernames", rawUsername);
+            const usernameSnap = await getDoc(usernameDocRef);
+
+            if (usernameSnap.exists()) {
+                showErrorAlert("Username ini sudah digunakan. Silakan pilih username lain!");
+                return;
+            }
+
+            // 2. Buat Akun Firebase Auth
+            const userCredential = await createUserWithEmailAndPassword(auth, virtualEmail, password);
+            const user = userCredential.user;
+
+            // 3. Simpan display name & Peta Username di Firestore
+            await updateProfile(user, { displayName: rawUsername });
+            
+            // Simpan indeks username unik
+            await setDoc(doc(db, "usernames", rawUsername), {
+                uid: user.uid,
+                createdAt: serverTimestamp()
+            });
+
+            // Simpan profil user awal
+            await setDoc(doc(db, "users", user.uid), {
+                username: rawUsername,
+                createdAt: serverTimestamp()
+            }, { merge: true });
+
+        } else {
+            // Login menggunakan Email Virtual dari Username
+            await signInWithEmailAndPassword(auth, virtualEmail, password);
+        }
+    } catch (err) { 
+        if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+            showErrorAlert("Username atau Password salah!");
+        } else if (err.code === 'auth/email-already-in-use') {
+            showErrorAlert("Username ini sudah digunakan.");
+        } else {
+            showErrorAlert(err.message);
+        }
+    }
+};
+
+// Update Tampilan Header saat Auth State berubah
+onAuthStateChanged(auth, async (user) => {
+    currentUser = user;
+    if (user) {
+        document.getElementById('authSection').classList.add('d-none');
+        document.getElementById('dashboardSection').classList.remove('d-none');
+        document.getElementById('userStatus').classList.remove('d-none');
+        document.getElementById('btnLogout').classList.remove('d-none');
+        
+        // Tampilkan username (displayName) di navbar
+        const displayName = user.displayName || (user.email ? user.email.split('@')[0] : "Guest");
+        document.getElementById('userEmail').innerText = `@${displayName}`;
+
+        await loadUserJournals();
+    } else {
+        document.getElementById('authSection').classList.remove('d-none');
+        document.getElementById('dashboardSection').classList.add('d-none');
+        document.getElementById('userStatus').classList.add('d-none');
+        document.getElementById('btnLogout').classList.add('d-none');
+    }
+});
 
         window.handleGuestLogin = async function() {
             hideErrorAlert();
