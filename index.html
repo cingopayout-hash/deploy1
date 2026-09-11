@@ -38,6 +38,7 @@
         /* Chart Widget Container */
         .tradingview-widget-container { height: 650px; width: 100%; }
         .img-thumb { width: 45px; height: 45px; object-fit: cover; border-radius: 5px; cursor: pointer; border: 1px solid #ddd; }
+        .img-preview-box { max-height: 80px; object-fit: contain; border-radius: 5px; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -225,19 +226,32 @@
                                         <label class="form-label">Hasil (P/L $)</label>
                                         <input type="number" step="0.01" id="pnl" class="form-control" placeholder="Contoh: 50 atau -25" required>
                                     </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">URL Gambar Before (Setup)</label>
-                                        <input type="url" id="imgBefore" class="form-control" placeholder="https://... (TradingView / Imgur)">
+
+                                    <!-- INPUT GAMBAR BEFORE (FILE ATAU URL) -->
+                                    <div class="mb-3 border p-2 rounded bg-body-tertiary">
+                                        <label class="form-label fw-bold mb-1"><i class="fa-solid fa-image text-primary me-1"></i>Gambar Before (Setup)</label>
+                                        <input type="file" id="fileBefore" class="form-control form-control-sm mb-2" accept="image/*" onchange="previewFile('fileBefore', 'imgBefore', 'prevBefore')">
+                                        <input type="url" id="imgBefore" class="form-control form-control-sm" placeholder="Atau paste URL gambar di sini...">
+                                        <div class="text-center mt-1 d-none" id="prevBeforeContainer">
+                                            <img id="prevBefore" class="img-preview-box" alt="Preview Before">
+                                        </div>
                                     </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">URL Gambar After (Hasil)</label>
-                                        <input type="url" id="imgAfter" class="form-control" placeholder="https://... (TradingView / Imgur)">
+
+                                    <!-- INPUT GAMBAR AFTER (FILE ATAU URL) -->
+                                    <div class="mb-3 border p-2 rounded bg-body-tertiary">
+                                        <label class="form-label fw-bold mb-1"><i class="fa-solid fa-image text-success me-1"></i>Gambar After (Hasil)</label>
+                                        <input type="file" id="fileAfter" class="form-control form-control-sm mb-2" accept="image/*" onchange="previewFile('fileAfter', 'imgAfter', 'prevAfter')">
+                                        <input type="url" id="imgAfter" class="form-control form-control-sm" placeholder="Atau paste URL gambar di sini...">
+                                        <div class="text-center mt-1 d-none" id="prevAfterContainer">
+                                            <img id="prevAfter" class="img-preview-box" alt="Preview After">
+                                        </div>
                                     </div>
+
                                     <div class="mb-3">
                                         <label class="form-label">Catatan</label>
                                         <textarea id="notes" class="form-control" rows="2"></textarea>
                                     </div>
-                                    <button type="submit" class="btn btn-success w-100">Simpan Trade</button>
+                                    <button type="submit" id="btnSaveTrade" class="btn btn-success w-100">Simpan Trade</button>
                                 </form>
                             </div>
                         </div>
@@ -529,6 +543,24 @@
             if (tvWidgetLoaded) loadTradingViewWidget();
         };
 
+        /* PREVIEW & READ UPLOADED FILE (BASE64) */
+        window.previewFile = function(fileInputId, urlInputId, imgPreviewId) {
+            const fileInput = document.getElementById(fileInputId);
+            const urlInput = document.getElementById(urlInputId);
+            const imgPreview = document.getElementById(imgPreviewId);
+            const container = imgPreview.parentElement;
+
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    urlInput.value = e.target.result; // Simpan Base64 ke input URL
+                    imgPreview.src = e.target.result;
+                    container.classList.remove('d-none');
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            }
+        };
+
         function showErrorAlert(msg) {
             const alertBox = document.getElementById('authAlert');
             alertBox.innerText = msg;
@@ -711,20 +743,33 @@
 
         window.saveTrade = async function(e) {
             e.preventDefault();
-            await addDoc(collection(db, "users", currentUser.uid, "journals", activeJournalId, "trades"), {
-                date: document.getElementById('tradeDate').value,
-                pair: document.getElementById('pair').value.toUpperCase(),
-                type: document.getElementById('type').value,
-                lot: parseFloat(document.getElementById('lotSize').value) || 0.01,
-                pnl: parseFloat(document.getElementById('pnl').value) || 0,
-                imgBefore: document.getElementById('imgBefore').value.trim(),
-                imgAfter: document.getElementById('imgAfter').value.trim(),
-                notes: document.getElementById('notes').value,
-                timestamp: serverTimestamp()
-            });
+            const btn = document.getElementById('btnSaveTrade');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Menyimpan...';
 
-            document.getElementById('tradeForm').reset();
-            document.getElementById('tradeDate').valueAsDate = new Date();
+            try {
+                await addDoc(collection(db, "users", currentUser.uid, "journals", activeJournalId, "trades"), {
+                    date: document.getElementById('tradeDate').value,
+                    pair: document.getElementById('pair').value.toUpperCase(),
+                    type: document.getElementById('type').value,
+                    lot: parseFloat(document.getElementById('lotSize').value) || 0.01,
+                    pnl: parseFloat(document.getElementById('pnl').value) || 0,
+                    imgBefore: document.getElementById('imgBefore').value.trim(),
+                    imgAfter: document.getElementById('imgAfter').value.trim(),
+                    notes: document.getElementById('notes').value,
+                    timestamp: serverTimestamp()
+                });
+
+                document.getElementById('tradeForm').reset();
+                document.getElementById('tradeDate').valueAsDate = new Date();
+                document.getElementById('prevBeforeContainer').classList.add('d-none');
+                document.getElementById('prevAfterContainer').classList.add('d-none');
+            } catch (err) {
+                alert("Gagal menyimpan trade: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Simpan Trade';
+            }
         };
 
         window.deleteTrade = async function(id) {
@@ -807,7 +852,7 @@
             
             new TradingView.widget({
                 "autosize": true,
-                "symbol": "FX:EURUSD",  /* DIGANTI KE SIMBOL FX:EURUSD */
+                "symbol": "FX:EURUSD",
                 "interval": "60",
                 "timezone": "Asia/Jakarta",
                 "theme": currentTheme,
@@ -818,7 +863,6 @@
                 "allow_symbol_change": true,
                 "hide_side_toolbar": false,
                 "container_id": "tv_chart_container",
-                /* INDIKATOR BAWAAN TERPASANG OTOMATIS */
                 "studies": [
                     "MASimple@tv-basicstudies",
                     "RSI@tv-basicstudies"
