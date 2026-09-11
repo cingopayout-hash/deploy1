@@ -123,7 +123,7 @@
             </li>
             <li class="nav-item">
                 <button class="nav-link" id="tvchart-tab" data-bs-toggle="tab" data-bs-target="#tabTVChart" type="button" onclick="loadTradingViewWidget()">
-                    <i class="fa-solid fa-chart-area me-1"></i> Interactive Chart (FXCM)
+                    <i class="fa-solid fa-chart-area me-1"></i> Interactive Chart (FX)
                 </button>
             </li>
             <li class="nav-item">
@@ -270,11 +270,11 @@
                 </div>
             </div>
 
-            <!-- TAB 2: INTERACTIVE CHART (TRADINGVIEW & FXCM) -->
+            <!-- TAB 2: INTERACTIVE CHART (TRADINGVIEW & FX) -->
             <div class="tab-pane fade" id="tabTVChart">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <span><i class="fa-solid fa-chart-line me-2"></i>FXCM Live Trading Chart & Drawing Tools</span>
+                        <span><i class="fa-solid fa-chart-line me-2"></i>FX Live Trading Chart & Drawing Tools</span>
                         <small class="text-muted">Powered by TradingView</small>
                     </div>
                     <div class="card-body p-0">
@@ -807,7 +807,7 @@
             
             new TradingView.widget({
                 "autosize": true,
-                "symbol": "FXCM:EURUSD",
+                "symbol": "FX:EURUSD",  /* DIGANTI KE SIMBOL FX:EURUSD */
                 "interval": "60",
                 "timezone": "Asia/Jakarta",
                 "theme": currentTheme,
@@ -817,7 +817,12 @@
                 "enable_publishing": false,
                 "allow_symbol_change": true,
                 "hide_side_toolbar": false,
-                "container_id": "tv_chart_container"
+                "container_id": "tv_chart_container",
+                /* INDIKATOR BAWAAN TERPASANG OTOMATIS */
+                "studies": [
+                    "MASimple@tv-basicstudies",
+                    "RSI@tv-basicstudies"
+                ]
             });
             tvWidgetLoaded = true;
         };
