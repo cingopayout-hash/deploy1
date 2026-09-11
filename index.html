@@ -33,8 +33,22 @@
             max-width: 420px;
             margin: 60px auto;
         }
-        .badge-win { background-color: #198754; }
-        .badge-loss { background-color: #dc3545; }
+        .divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            margin: 15px 0;
+            color: #6c757d;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .divider span {
+            padding: 0 10px;
+            font-size: 0.85rem;
+        }
     </style>
 </head>
 <body>
@@ -54,7 +68,7 @@
         </div>
     </nav>
 
-    <!-- SECTION 1: AUTHENTICATION (Login & Sign Up) -->
+    <!-- SECTION 1: AUTHENTICATION (Login, Sign Up & Guest) -->
     <div id="authSection" class="container">
         <div class="card auth-card">
             <div class="card-header text-center py-3">
@@ -63,20 +77,28 @@
             <div class="card-body p-4">
                 <div id="authAlert" class="alert alert-danger d-none" role="alert"></div>
 
-                <!-- Form Auth -->
                 <form id="authForm" onsubmit="handleAuth(event)">
                     <div class="mb-3">
                         <label for="email" class="form-label">Alamat Email</label>
-                        <input type="email" class="form-control" id="email" required placeholder="nama@email.com">
+                        <input type="email" class="form-control" id="email" placeholder="nama@email.com">
                     </div>
                     <div class="mb-3">
                         <label for="password" class="form-label">Kata Sandi</label>
-                        <input type="password" class="form-control" id="password" required placeholder="******">
+                        <input type="password" class="form-control" id="password" placeholder="Minimal 6 karakter">
                     </div>
-                    <button type="submit" id="btnSubmitAuth" class="btn btn-primary w-100 mb-3">
+                    <button type="submit" id="btnSubmitAuth" class="btn btn-primary w-100 mb-2">
                         <i class="fa-solid fa-right-to-bracket me-1"></i>Masuk
                     </button>
                 </form>
+
+                <div class="divider">
+                    <span>atau</span>
+                </div>
+
+                <!-- Tombol Masuk Guest / Tamu -->
+                <button class="btn btn-outline-secondary w-100 mb-3" onclick="handleGuestLogin()">
+                    <i class="fa-solid fa-user-secret me-1"></i>Masuk sebagai Guest (Tamu)
+                </button>
 
                 <div class="text-center">
                     <small id="authToggleText">Belum punya akun? <a href="#" onclick="toggleAuthMode(true)">Daftar sekarang</a></small>
@@ -85,7 +107,7 @@
         </div>
     </div>
 
-    <!-- SECTION 2: DASHBOARD TRADING (Tampilan Utama setelah Login) -->
+    <!-- SECTION 2: DASHBOARD TRADING -->
     <div id="dashboardSection" class="container mt-4 d-none">
         
         <!-- Summary Cards -->
@@ -200,13 +222,14 @@
 
     </div>
 
-    <!-- SDK Firebase (Modular v9/v10) -->
+    <!-- SDK Firebase Modular -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { 
             getAuth, 
             createUserWithEmailAndPassword, 
             signInWithEmailAndPassword, 
+            signInAnonymously,
             onAuthStateChanged, 
             signOut 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -223,20 +246,18 @@
             serverTimestamp 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // ==========================================
-        // CONFIG FIREBASE (Ganti dengan Config milikmu)
-        // ==========================================
+        // CONFIG FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyAeWvYIS_-SRSc-AINGNa7hTDOGmraxU7o",
             authDomain: "trading-journal-ecfcd.firebaseapp.com",
             projectId: "trading-journal-ecfcd",
             storageBucket: "trading-journal-ecfcd.firebasestorage.app",
             messagingSenderId: "282320283613",
-            appId: "1:282320283613:web:058ed10592705d6d453834"
-			measurementId: "G-Q2GV8YF6ME"
+            appId: "1:282320283613:web:058ed10592705d6d453834",
+            measurementId: "G-Q2GV8YF6ME"
         };
 
-        // Inisialisasi Firebase
+        // Inisialisasi
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -246,7 +267,6 @@
         let chartInstance = null;
         let unsubscribeTrades = null;
 
-        // Toggle antara Login dan Sign Up
         window.toggleAuthMode = function(signUp) {
             isSignUpMode = signUp;
             const title = document.getElementById('authTitle');
@@ -267,7 +287,7 @@
             }
         };
 
-        // Handle Login / Register
+        // Login / Register via Email
         window.handleAuth = async function(e) {
             e.preventDefault();
             const email = document.getElementById('email').value;
@@ -276,33 +296,60 @@
 
             alertBox.classList.add('d-none');
 
+            if (!email || !password) {
+                alertBox.innerText = "Silakan isi email dan password!";
+                alertBox.classList.remove('d-none');
+                return;
+            }
+
             try {
                 if (isSignUpMode) {
-                    // Sign Up
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
 
-                    // Buat dokumen profil pengguna di Firestore
+                    // Buat profil pengguna
                     await setDoc(doc(db, "users", user.uid), {
                         email: user.email,
                         createdAt: serverTimestamp()
                     });
                 } else {
-                    // Login
                     await signInWithEmailAndPassword(auth, email, password);
                 }
             } catch (error) {
-                alertBox.innerText = error.message;
+                let errorMsg = error.message;
+                if (error.code === 'auth/weak-password') {
+                    errorMsg = 'Kata sandi terlalu pendek! Minimal 6 karakter.';
+                } else if (error.code === 'auth/email-already-in-use') {
+                    errorMsg = 'Email ini sudah terdaftar. Silakan login.';
+                } else if (error.code === 'auth/invalid-credential') {
+                    errorMsg = 'Email atau password salah.';
+                }
+                alertBox.innerText = errorMsg;
                 alertBox.classList.remove('d-none');
             }
         };
 
-        // Logout
+        // Login Mode Guest / Tamu
+        window.handleGuestLogin = async function() {
+            const alertBox = document.getElementById('authAlert');
+            alertBox.classList.add('d-none');
+
+            try {
+                await signInAnonymously(auth);
+            } catch (error) {
+                if (error.code === 'auth/admin-restricted-operation') {
+                    alertBox.innerText = "Mode Guest belum diaktifkan di Firebase Console. Aktifkan 'Anonymous' di menu Authentication > Sign-in method.";
+                } else {
+                    alertBox.innerText = error.message;
+                }
+                alertBox.classList.remove('d-none');
+            }
+        };
+
         window.logoutUser = function() {
             signOut(auth);
         };
 
-        // Observer Status Otentikasi
         onAuthStateChanged(auth, (user) => {
             currentUser = user;
             const authSec = document.getElementById('authSection');
@@ -312,29 +359,25 @@
             const userEmail = document.getElementById('userEmail');
 
             if (user) {
-                // User sedang Login
                 authSec.classList.add('d-none');
                 dashSec.classList.remove('d-none');
                 userStatus.classList.remove('d-none');
                 btnLogout.classList.remove('d-none');
-                userEmail.innerText = user.email;
+                
+                userEmail.innerText = user.isAnonymous ? "Guest / Tamu" : user.email;
 
-                // Load Data Trades dari Firestore secara Realtime
                 loadTrades(user.uid);
             } else {
-                // User Logout
                 if (unsubscribeTrades) unsubscribeTrades();
                 authSec.classList.remove('d-none');
                 dashSec.classList.add('d-none');
                 userStatus.classList.add('d-none');
                 btnLogout.classList.add('d-none');
                 
-                // Reset UI
                 resetDashboard();
             }
         });
 
-        // Simpan Data Trade Baru ke Firestore
         window.saveTrade = async function(e) {
             e.preventDefault();
             if (!currentUser) return;
@@ -355,11 +398,10 @@
 
                 document.getElementById('tradeForm').reset();
             } catch (err) {
-                alert("Gagal menyimpan data: " + err.message);
+                alert("Gagal menyimpan data. Pastikan Firebase Firestore Rules mengizinkan akses simpan: " + err.message);
             }
         };
 
-        // Hapus Trade
         window.deleteTrade = async function(tradeId) {
             if (!currentUser || !confirm("Yakin ingin menghapus transaksi ini?")) return;
             try {
@@ -369,7 +411,6 @@
             }
         };
 
-        // Mendengarkan Perubahan Data Firestore (Realtime)
         function loadTrades(userId) {
             const q = query(
                 collection(db, "users", userId, "trades"), 
@@ -386,7 +427,6 @@
             });
         }
 
-        // Render Tabel, Statistik & Grafik
         function renderDashboard(trades) {
             const tbody = document.getElementById('tradeTableBody');
             tbody.innerHTML = '';
@@ -440,7 +480,6 @@
                 });
             }
 
-            // Hitung Statistik
             const winRate = totalTrades > 0 ? ((wins / totalTrades) * 100).toFixed(1) : 0;
             const profitFactor = totalLossAmount > 0 ? (totalWinAmount / totalLossAmount).toFixed(2) : (totalWinAmount > 0 ? "∞" : "0.00");
 
@@ -449,11 +488,9 @@
             document.getElementById('statPnL').innerText = `$${totalPnL.toFixed(2)}`;
             document.getElementById('statPF').innerText = profitFactor;
 
-            // Render Grafik
             updateChart(chartLabels, chartData);
         }
 
-        // Render / Update Chart.js
         function updateChart(labels, data) {
             const ctx = document.getElementById('performanceChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
