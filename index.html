@@ -3,100 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jurnal Trading</title>
-    <!-- Bootstrap CSS & FontAwesome -->
+    <title>Jurnal Trading Multi-Account</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            transition: background-color 0.3s, color 0.3s;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .navbar-brand {
-            font-weight: 700;
-            letter-spacing: 0.5px;
-        }
-        .card {
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            border: none;
-            margin-bottom: 20px;
-        }
-        .card-header {
-            border-bottom: 1px solid rgba(0,0,0,0.08);
-            font-weight: 600;
-        }
-        .auth-card {
-            max-width: 420px;
-            margin: 60px auto;
-        }
-        .divider {
-            display: flex;
-            align-items: center;
-            text-align: center;
-            margin: 15px 0;
-            color: #6c757d;
-        }
-        .divider::before, .divider::after {
-            content: '';
-            flex: 1;
-            border-bottom: 1px solid #dee2e6;
-        }
-        .divider span {
-            padding: 0 10px;
-            font-size: 0.85rem;
-        }
+        body { transition: background-color 0.3s, color 0.3s; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar-brand { font-weight: 700; }
+        .card { border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: none; margin-bottom: 20px; }
+        .card-header { border-bottom: 1px solid rgba(0,0,0,0.08); font-weight: 600; }
+        .auth-card { max-width: 420px; margin: 60px auto; }
+        .divider { display: flex; align-items: center; text-align: center; margin: 15px 0; color: #6c757d; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #dee2e6; }
+        .divider span { padding: 0 10px; font-size: 0.85rem; }
 
         /* Calendar PnL Styles */
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 6px;
-        }
-        .calendar-header-day {
-            text-align: center;
-            font-weight: bold;
-            font-size: 0.85rem;
-            padding: 5px 0;
-        }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .calendar-header-day { text-align: center; font-weight: bold; font-size: 0.85rem; padding: 5px 0; }
         .calendar-day {
-            min-height: 75px;
-            border-radius: 8px;
-            padding: 6px;
-            font-size: 0.8rem;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            background-color: var(--bs-tertiary-bg);
-            border: 1px solid var(--bs-border-color);
+            min-height: 85px; border-radius: 8px; padding: 6px; font-size: 0.8rem;
+            display: flex; flex-direction: column; justify-content: space-between;
+            background-color: var(--bs-tertiary-bg); border: 1px solid var(--bs-border-color);
+            cursor: pointer; transition: transform 0.1s, border-color 0.2s;
         }
-        .calendar-day.empty {
-            background-color: transparent;
-            border: none;
-        }
-        .calendar-day .day-num {
-            font-weight: bold;
-            font-size: 0.75rem;
-            opacity: 0.8;
-        }
-        .calendar-day.profit {
-            background-color: rgba(25, 135, 84, 0.15);
-            border-color: #198754;
-        }
-        .calendar-day.loss {
-            background-color: rgba(220, 53, 69, 0.15);
-            border-color: #dc3545;
-        }
-        .pnl-val {
-            font-weight: bold;
-            font-size: 0.85rem;
-        }
-        .trade-count {
-            font-size: 0.7rem;
-            opacity: 0.75;
-        }
+        .calendar-day:hover:not(.empty) { transform: translateY(-2px); border-color: #0d6efd; }
+        .calendar-day.empty { background-color: transparent; border: none; cursor: default; }
+        .calendar-day .day-num { font-weight: bold; font-size: 0.8rem; opacity: 0.8; }
+        .calendar-day.profit { background-color: rgba(25, 135, 84, 0.15); border-color: #198754; }
+        .calendar-day.loss { background-color: rgba(220, 53, 69, 0.15); border-color: #dc3545; }
+        .pnl-val { font-weight: bold; font-size: 0.85rem; }
+        .trade-count { font-size: 0.7rem; opacity: 0.75; }
     </style>
 </head>
 <body>
@@ -104,14 +40,12 @@
     <!-- NAVBAR -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="#"><i class="fa-solid fa-chart-line text-success me-2"></i>Jurnal Trading</a>
+            <a class="navbar-brand" href="#"><i class="fa-solid fa-chart-line text-success me-2"></i>Jurnal Trading Multi-Account</a>
             
             <div class="d-flex align-items-center ms-auto">
-                <!-- Theme Toggle Button -->
                 <button class="btn btn-outline-light btn-sm me-3" id="btnThemeToggle" onclick="toggleTheme()" title="Ubah Tema">
                     <i class="fa-solid fa-moon" id="themeIcon"></i>
                 </button>
-
                 <span id="userStatus" class="navbar-text me-3 text-light d-none">
                     <i class="fa-solid fa-circle-user me-1"></i> <span id="userEmail"></span>
                 </span>
@@ -130,7 +64,6 @@
             </div>
             <div class="card-body p-4">
                 <div id="authAlert" class="alert alert-danger d-none" role="alert"></div>
-
                 <form id="authForm" onsubmit="handleAuth(event)">
                     <div class="mb-3">
                         <label for="email" class="form-label">Alamat Email</label>
@@ -144,15 +77,10 @@
                         <i class="fa-solid fa-right-to-bracket me-1"></i>Masuk
                     </button>
                 </form>
-
-                <div class="divider">
-                    <span>atau</span>
-                </div>
-
+                <div class="divider"><span>atau</span></div>
                 <button class="btn btn-outline-secondary w-100 mb-3" onclick="handleGuestLogin()">
                     <i class="fa-solid fa-user-secret me-1"></i>Masuk sebagai Guest (Tamu)
                 </button>
-
                 <div class="text-center">
                     <small id="authToggleText">Belum punya akun? <a href="#" onclick="toggleAuthMode(true)">Daftar sekarang</a></small>
                 </div>
@@ -163,20 +91,38 @@
     <!-- SECTION 2: DASHBOARD TRADING -->
     <div id="dashboardSection" class="container mt-4 d-none">
         
-        <!-- Navigation Tabs / Menu -->
+        <!-- PILIH & KELOLA JURNAL (MULTI-ACCOUNT) -->
+        <div class="card p-3 mb-4 bg-body-tertiary border">
+            <div class="row align-items-center">
+                <div class="col-md-5 mb-2 mb-md-0">
+                    <label class="fw-bold mb-1"><i class="fa-solid fa-book text-primary me-2"></i>Pilih Jurnal Trading Active:</label>
+                    <div class="d-flex gap-2">
+                        <select id="journalSelect" class="form-select" onchange="switchJournal()"></select>
+                        <button class="btn btn-danger btn-sm" onclick="deleteCurrentJournal()" title="Hapus Jurnal Ini"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                </div>
+                <div class="col-md-7 text-md-end">
+                    <button class="btn btn-success btn-sm mt-3 mt-md-0" onclick="openCreateJournalModal()">
+                        <i class="fa-solid fa-plus me-1"></i>Buat Jurnal Baru
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
         <ul class="nav nav-pills mb-4" id="mainTab" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#tabDashboard" type="button" role="tab">
+            <li class="nav-item">
+                <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#tabDashboard" type="button">
                     <i class="fa-solid fa-gauge me-1"></i> Dashboard & Journal
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="calendar-tab" data-bs-toggle="tab" data-bs-target="#tabCalendar" type="button" role="tab">
+            <li class="nav-item">
+                <button class="nav-link" id="calendar-tab" data-bs-toggle="tab" data-bs-target="#tabCalendar" type="button">
                     <i class="fa-solid fa-calendar-days me-1"></i> Kalender PnL
                 </button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="calc-tab" data-bs-toggle="tab" data-bs-target="#tabCalculator" type="button" role="tab">
+            <li class="nav-item">
+                <button class="nav-link" id="calc-tab" data-bs-toggle="tab" data-bs-target="#tabCalculator" type="button">
                     <i class="fa-solid fa-calculator me-1"></i> Kalkulator Lot & Risk
                 </button>
             </li>
@@ -185,19 +131,16 @@
         <div class="tab-content" id="mainTabContent">
 
             <!-- TAB 1: DASHBOARD & JOURNAL -->
-            <div class="tab-pane fade show active" id="tabDashboard" role="tabpanel">
-                
-                <!-- Card Pengaturan Modal Awal -->
+            <div class="tab-pane fade show active" id="tabDashboard">
                 <div class="card p-3 mb-4 bg-body-tertiary border">
                     <div class="row align-items-center">
                         <div class="col-md-6 mb-2 mb-md-0">
-                            <h6 class="mb-0 fw-bold"><i class="fa-solid fa-wallet text-warning me-2"></i>Pengaturan Modal Awal (Initial Capital)</h6>
-                            <small class="text-muted">Masukkan modal awal untuk menghitung persentase pertumbuhan akun (% Gain).</small>
+                            <h6 class="mb-0 fw-bold"><i class="fa-solid fa-wallet text-warning me-2"></i>Modal Awal Jurnal Ini</h6>
                         </div>
                         <div class="col-md-6 d-flex gap-2">
                             <div class="input-group">
                                 <span class="input-group-text">$</span>
-                                <input type="number" id="inputInitialBalance" class="form-control" value="10000" step="100" placeholder="10000">
+                                <input type="number" id="inputInitialBalance" class="form-control" value="10000" step="100">
                                 <button class="btn btn-outline-primary" onclick="updateInitialBalance()"><i class="fa-solid fa-floppy-disk me-1"></i>Simpan</button>
                             </div>
                         </div>
@@ -209,7 +152,7 @@
                     <div class="col-md-3">
                         <div class="card text-white bg-primary">
                             <div class="card-body">
-                                <h6 class="card-title">Modal Awal / Saldo</h6>
+                                <h6 class="card-title">Saldo Akun</h6>
                                 <h2 id="statBalance" class="mb-0">$10,000.00</h2>
                             </div>
                         </div>
@@ -217,7 +160,7 @@
                     <div class="col-md-3">
                         <div class="card text-white bg-success">
                             <div class="card-body">
-                                <h6 class="card-title">Win Rate (All)</h6>
+                                <h6 class="card-title">Win Rate</h6>
                                 <h2 id="statWinRate" class="mb-0">0%</h2>
                             </div>
                         </div>
@@ -244,9 +187,7 @@
                     <!-- Form Input Trade -->
                     <div class="col-md-4">
                         <div class="card">
-                            <div class="card-header">
-                                <i class="fa-solid fa-plus me-1"></i>Tambah Transaksi
-                            </div>
+                            <div class="card-header"><i class="fa-solid fa-plus me-1"></i>Tambah Transaksi</div>
                             <div class="card-body">
                                 <form id="tradeForm" onsubmit="saveTrade(event)">
                                     <div class="mb-3">
@@ -267,7 +208,7 @@
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Lot Size</label>
-                                            <input type="number" step="0.01" id="lotSize" class="form-control" placeholder="0.01" value="0.01" required>
+                                            <input type="number" step="0.01" id="lotSize" class="form-control" value="0.01" required>
                                         </div>
                                     </div>
                                     <div class="mb-3">
@@ -275,8 +216,8 @@
                                         <input type="number" step="0.01" id="pnl" class="form-control" placeholder="Contoh: 50 atau -25" required>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label">Catatan / Alasan</label>
-                                        <textarea id="notes" class="form-control" rows="2" placeholder="Catatan analisis..."></textarea>
+                                        <label class="form-label">Catatan</label>
+                                        <textarea id="notes" class="form-control" rows="2"></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-success w-100">Simpan Trade</button>
                                 </form>
@@ -287,36 +228,21 @@
                     <!-- Tabel & Grafik -->
                     <div class="col-md-8">
                         <div class="card mb-4">
-                            <div class="card-header">
-                                <i class="fa-solid fa-chart-line me-1"></i>Grafik Performa Portfolio
-                            </div>
-                            <div class="card-body">
-                                <canvas id="performanceChart" height="100"></canvas>
-                            </div>
+                            <div class="card-header"><i class="fa-solid fa-chart-line me-1"></i>Grafik Performa Portfolio</div>
+                            <div class="card-body"><canvas id="performanceChart" height="100"></canvas></div>
                         </div>
-
                         <div class="card">
-                            <div class="card-header">
-                                <i class="fa-solid fa-list me-1"></i>Riwayat Transaksi
-                            </div>
+                            <div class="card-header"><i class="fa-solid fa-list me-1"></i>Riwayat Transaksi</div>
                             <div class="card-body p-0">
                                 <div class="table-responsive">
                                     <table class="table table-hover mb-0 align-middle">
                                         <thead>
                                             <tr>
-                                                <th>Tanggal</th>
-                                                <th>Aset</th>
-                                                <th>Tipe</th>
-                                                <th>Lot</th>
-                                                <th>P/L ($)</th>
-                                                <th>Catatan</th>
-                                                <th>Aksi</th>
+                                                <th>Tanggal</th><th>Aset</th><th>Tipe</th><th>Lot</th><th>P/L ($)</th><th>Catatan</th><th>Aksi</th>
                                             </tr>
                                         </thead>
                                         <tbody id="tradeTableBody">
-                                            <tr>
-                                                <td colspan="7" class="text-center py-3 text-muted">Belum ada data transaksi.</td>
-                                            </tr>
+                                            <tr><td colspan="7" class="text-center py-3 text-muted">Belum ada data transaksi.</td></tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -326,47 +252,44 @@
                 </div>
             </div>
 
-            <!-- TAB 2: KALENDER PNL (PROP FIRM STYLE) -->
-            <div class="tab-pane fade" id="tabCalendar" role="tabpanel">
-                <div class="row mb-3">
+            <!-- TAB 2: KALENDER PNL (CUSTOM & MANUAL INPUT) -->
+            <div class="tab-pane fade" id="tabCalendar">
+                <div class="row mb-3 align-items-center">
                     <div class="col-md-8 d-flex align-items-center gap-2">
                         <button class="btn btn-outline-secondary btn-sm" onclick="changeMonth(-1)"><i class="fa-solid fa-chevron-left"></i></button>
                         <h4 class="mb-0 fw-bold" id="calendarMonthYear">Bulan Tahun</h4>
                         <button class="btn btn-outline-secondary btn-sm" onclick="changeMonth(1)"><i class="fa-solid fa-chevron-right"></i></button>
                         <button class="btn btn-sm btn-link" onclick="resetCalendarToCurrent()">Bulan Ini</button>
                     </div>
+                    <div class="col-md-4 text-md-end">
+                        <button class="btn btn-outline-primary btn-sm" onclick="openManualPnlModal()"><i class="fa-solid fa-pen-to-square me-1"></i>Input Custom PnL Tanggal Berapapun</button>
+                    </div>
                 </div>
 
                 <!-- Monthly Stats Summary -->
                 <div class="row mb-4">
-                    <div class="col-md-20 col-sm-6 mb-2">
+                    <div class="col-md-3 col-6 mb-2">
                         <div class="card p-3 text-center">
                             <small class="text-muted">Total PnL Bulan Ini</small>
                             <h4 id="monthTotalPnL" class="mb-0 fw-bold">$0.00</h4>
                         </div>
                     </div>
-                    <div class="col-md-20 col-sm-6 mb-2">
+                    <div class="col-md-3 col-6 mb-2">
                         <div class="card p-3 text-center">
-                            <small class="text-muted">Win Rate Bulan Ini</small>
-                            <h4 id="monthWinRate" class="mb-0 fw-bold">0%</h4>
+                            <small class="text-muted">Total Trade Bulan Ini</small>
+                            <h4 id="monthTotalTrades" class="mb-0 fw-bold">0</h4>
                         </div>
                     </div>
-                    <div class="col-md-20 col-sm-6 mb-2">
+                    <div class="col-md-3 col-6 mb-2">
                         <div class="card p-3 text-center">
-                            <small class="text-muted">Profit Terbesar</small>
-                            <h4 id="monthBestTrade" class="mb-0 text-success fw-bold">$0.00</h4>
+                            <small class="text-muted">Hari Profit</small>
+                            <h4 id="monthProfitDays" class="mb-0 text-success fw-bold">0</h4>
                         </div>
                     </div>
-                    <div class="col-md-20 col-sm-6 mb-2">
+                    <div class="col-md-3 col-6 mb-2">
                         <div class="card p-3 text-center">
-                            <small class="text-muted">Rugi Terbesar</small>
-                            <h4 id="monthWorstTrade" class="mb-0 text-danger fw-bold">$0.00</h4>
-                        </div>
-                    </div>
-                    <div class="col-md-20 col-sm-12 mb-2">
-                        <div class="card p-3 text-center">
-                            <small class="text-muted">Hari Profit / Rugi</small>
-                            <h4 id="monthDaysRatio" class="mb-0 fw-bold">0 / 0</h4>
+                            <small class="text-muted">Hari Loss</small>
+                            <h4 id="monthLossDays" class="mb-0 text-danger fw-bold">0</h4>
                         </div>
                     </div>
                 </div>
@@ -382,20 +305,16 @@
                         <div class="calendar-header-day">Jum</div>
                         <div class="calendar-header-day text-primary">Sab</div>
                     </div>
-                    <div class="calendar-grid" id="calendarDaysGrid">
-                        <!-- Rendered by JS -->
-                    </div>
+                    <div class="calendar-grid" id="calendarDaysGrid"></div>
                 </div>
             </div>
 
             <!-- TAB 3: KALKULATOR LOT & RISK -->
-            <div class="tab-pane fade" id="tabCalculator" role="tabpanel">
+            <div class="tab-pane fade" id="tabCalculator">
                 <div class="row justify-content-center">
                     <div class="col-md-8">
                         <div class="card">
-                            <div class="card-header">
-                                <i class="fa-solid fa-calculator me-2"></i>Kalkulator Lot Size & Risk Management
-                            </div>
+                            <div class="card-header"><i class="fa-solid fa-calculator me-2"></i>Kalkulator Lot Size & Risk Management</div>
                             <div class="card-body p-4">
                                 <form id="calcForm" oninput="calculateLotSize()">
                                     <div class="row mb-3">
@@ -408,7 +327,6 @@
                                             <input type="number" id="calcRiskPercent" class="form-control" value="1" step="0.1">
                                         </div>
                                     </div>
-
                                     <div class="row mb-3">
                                         <div class="col-md-6 mb-3 mb-md-0">
                                             <label class="form-label">Pilih Pair / Aset</label>
@@ -447,13 +365,11 @@
                                         </div>
                                         <div class="col-md-6">
                                             <label class="form-label">Stop Loss (Pips)</label>
-                                            <input type="number" id="calcSLPipsInput" class="form-control" placeholder="Contoh: 30" value="30" step="1">
+                                            <input type="number" id="calcSLPipsInput" class="form-control" value="30" step="1">
                                         </div>
                                     </div>
                                 </form>
-
                                 <hr>
-
                                 <div class="row text-center mt-4">
                                     <div class="col-md-4 mb-2">
                                         <small class="text-muted">Risiko Maksimal ($)</small>
@@ -475,43 +391,90 @@
             </div>
 
         </div>
+    </div>
 
+    <!-- MODAL 1: BUAT JURNAL BARU -->
+    <div class="modal fade" id="modalCreateJournal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Buat Jurnal Trading Baru</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nama Jurnal / Akun</label>
+                        <input type="text" id="newJournalName" class="form-control" placeholder="Contoh: Akun Personal / Prop Firm 100k">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Modal Awal ($)</label>
+                        <input type="number" id="newJournalBalance" class="form-control" value="10000" step="100">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-success" onclick="createNewJournal()">Buat Jurnal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: INPUT MANUAL/CUSTOM PNL KALENDER -->
+    <div class="modal fade" id="modalManualPnl" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Custom Log PnL Harian</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="manualPnlForm">
+                        <div class="mb-3">
+                            <label class="form-label">Pilih Tanggal</label>
+                            <input type="date" id="manualDate" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Hasil PnL ($)</label>
+                            <input type="number" step="0.01" id="manualPnl" class="form-control" placeholder="Misal: 150 atau -50" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Berapa Kali Trades</label>
+                            <input type="number" id="manualTrades" class="form-control" value="1" min="0" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Catatan Tambahan (Opsional)</label>
+                            <input type="text" id="manualNotes" class="form-control" placeholder="Contoh: News Trading / Overtrade">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-danger" id="btnDeletePnl" onclick="deleteManualPnl()">Hapus Log Hari Ini</button>
+                    <div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn btn-primary" onclick="saveManualPnl()">Simpan PnL</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- SDK Firebase Modular -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { 
-            getAuth, 
-            createUserWithEmailAndPassword, 
-            signInWithEmailAndPassword, 
-            signInAnonymously,
-            onAuthStateChanged, 
-            signOut 
+            getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInAnonymously, onAuthStateChanged, signOut 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { 
-            getFirestore, 
-            doc, 
-            setDoc, 
-            getDoc,
-            collection, 
-            addDoc, 
-            onSnapshot, 
-            deleteDoc, 
-            query, 
-            orderBy, 
-            serverTimestamp 
+            getFirestore, doc, setDoc, getDoc, collection, addDoc, onSnapshot, deleteDoc, query, orderBy, serverTimestamp, getDocs 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // CONFIG FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyAeWvYIS_-SRSc-AINGNa7hTDOGmraxU7o",
             authDomain: "trading-journal-ecfcd.firebaseapp.com",
             projectId: "trading-journal-ecfcd",
             storageBucket: "trading-journal-ecfcd.firebasestorage.app",
             messagingSenderId: "282320283613",
-            appId: "1:282320283613:web:058ed10592705d6d453834",
-            measurementId: "G-Q2GV8YF6ME"
+            appId: "1:282320283613:web:058ed10592705d6d453834"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -522,315 +485,263 @@
         let currentUser = null;
         let chartInstance = null;
         let unsubscribeTrades = null;
+        let unsubscribeDailyPnl = null;
+        
+        let journalsList = [];
+        let activeJournalId = 'default';
+        let initialBalance = 10000;
         let currentTrades = [];
-        let initialBalance = 10000; // Default Modal Awal
-
-        // Current view date for calendar
+        let dailyPnlLogs = {}; // Key: YYYY-MM-DD
         let calendarDate = new Date();
 
-        // Default input tanggal di form
         document.getElementById('tradeDate').valueAsDate = new Date();
 
-        // TEMA SWITCHER (LIGHT/DARK)
+        // THEME
         window.toggleTheme = function() {
             const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-bs-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
+            const newTheme = html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-bs-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            updateThemeIcon(newTheme);
+            document.getElementById('themeIcon').className = newTheme === 'dark' ? 'fa-solid fa-sun text-warning' : 'fa-solid fa-moon';
         };
-
-        function updateThemeIcon(theme) {
-            const icon = document.getElementById('themeIcon');
-            if (theme === 'dark') {
-                icon.className = 'fa-solid fa-sun text-warning';
-            } else {
-                icon.className = 'fa-solid fa-moon';
-            }
-        }
-
-        // Init theme
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-bs-theme', savedTheme);
-        updateThemeIcon(savedTheme);
-
-        // MODAL AWAL / INITIAL BALANCE
-        window.updateInitialBalance = async function() {
-            const val = parseFloat(document.getElementById('inputInitialBalance').value);
-            if (isNaN(val) || val < 0) {
-                alert("Masukkan angka modal awal yang valid!");
-                return;
-            }
-
-            initialBalance = val;
-            document.getElementById('calcBalance').value = val; // Sync ke Kalkulator
-
-            if (currentUser) {
-                try {
-                    await setDoc(doc(db, "users", currentUser.uid), {
-                        initialBalance: val
-                    }, { merge: true });
-                } catch (e) {
-                    console.error("Gagal menyimpan modal awal:", e);
-                }
-            }
-
-            renderDashboard(currentTrades);
-        };
-
-        async function loadUserSettings(userId) {
-            try {
-                const userDoc = await getDoc(doc(db, "users", userId));
-                if (userDoc.exists() && userDoc.data().initialBalance !== undefined) {
-                    initialBalance = userDoc.data().initialBalance;
-                } else {
-                    initialBalance = 10000;
-                }
-            } catch (e) {
-                initialBalance = 10000;
-            }
-
-            document.getElementById('inputInitialBalance').value = initialBalance;
-            document.getElementById('calcBalance').value = initialBalance;
-        }
 
         // AUTHENTICATION
         window.toggleAuthMode = function(signUp) {
             isSignUpMode = signUp;
-            const title = document.getElementById('authTitle');
-            const submitBtn = document.getElementById('btnSubmitAuth');
-            const toggleText = document.getElementById('authToggleText');
-            const alertBox = document.getElementById('authAlert');
-
-            alertBox.classList.add('d-none');
-
-            if (isSignUpMode) {
-                title.innerText = "Daftar Akun Baru";
-                submitBtn.innerText = "Daftar";
-                toggleText.innerHTML = 'Sudah punya akun? <a href="#" onclick="toggleAuthMode(false)">Masuk di sini</a>';
-            } else {
-                title.innerText = "Masuk ke Jurnal Trading";
-                submitBtn.innerText = "Masuk";
-                toggleText.innerHTML = 'Belum punya akun? <a href="#" onclick="toggleAuthMode(true)">Daftar sekarang</a>';
-            }
+            document.getElementById('authTitle').innerText = isSignUpMode ? "Daftar Akun Baru" : "Masuk ke Jurnal Trading";
+            document.getElementById('btnSubmitAuth').innerText = isSignUpMode ? "Daftar" : "Masuk";
+            document.getElementById('authToggleText').innerHTML = isSignUpMode 
+                ? 'Sudah punya akun? <a href="#" onclick="toggleAuthMode(false)">Masuk di sini</a>'
+                : 'Belum punya akun? <a href="#" onclick="toggleAuthMode(true)">Daftar sekarang</a>';
         };
 
         window.handleAuth = async function(e) {
             e.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const alertBox = document.getElementById('authAlert');
-
-            alertBox.classList.add('d-none');
-
-            if (!email || !password) {
-                alertBox.innerText = "Silakan isi email dan password!";
-                alertBox.classList.remove('d-none');
-                return;
-            }
-
             try {
                 if (isSignUpMode) {
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    const user = userCredential.user;
-
-                    await setDoc(doc(db, "users", user.uid), {
-                        email: user.email,
-                        initialBalance: 10000,
-                        createdAt: serverTimestamp()
-                    });
+                    await createUserWithEmailAndPassword(auth, email, password);
                 } else {
                     await signInWithEmailAndPassword(auth, email, password);
                 }
-            } catch (error) {
-                let errorMsg = error.message;
-                if (error.code === 'auth/weak-password') {
-                    errorMsg = 'Kata sandi terlalu pendek! Minimal 6 karakter.';
-                } else if (error.code === 'auth/email-already-in-use') {
-                    errorMsg = 'Email ini sudah terdaftar. Silakan login.';
-                } else if (error.code === 'auth/invalid-credential') {
-                    errorMsg = 'Email atau password salah.';
-                }
-                alertBox.innerText = errorMsg;
-                alertBox.classList.remove('d-none');
-            }
+            } catch (err) { alert(err.message); }
         };
 
         window.handleGuestLogin = async function() {
-            const alertBox = document.getElementById('authAlert');
-            alertBox.classList.add('d-none');
-
-            try {
-                await signInAnonymously(auth);
-            } catch (error) {
-                if (error.code === 'auth/admin-restricted-operation') {
-                    alertBox.innerText = "Mode Guest belum diaktifkan di Firebase Console. Aktifkan 'Anonymous' di menu Authentication > Sign-in method.";
-                } else {
-                    alertBox.innerText = error.message;
-                }
-                alertBox.classList.remove('d-none');
-            }
+            try { await signInAnonymously(auth); } catch (err) { alert(err.message); }
         };
 
-        window.logoutUser = function() {
-            signOut(auth);
-        };
+        window.logoutUser = function() { signOut(auth); };
 
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
-            const authSec = document.getElementById('authSection');
-            const dashSec = document.getElementById('dashboardSection');
-            const userStatus = document.getElementById('userStatus');
-            const btnLogout = document.getElementById('btnLogout');
-            const userEmail = document.getElementById('userEmail');
-
             if (user) {
-                authSec.classList.add('d-none');
-                dashSec.classList.remove('d-none');
-                userStatus.classList.remove('d-none');
-                btnLogout.classList.remove('d-none');
-                
-                userEmail.innerText = user.isAnonymous ? "Guest / Tamu" : user.email;
+                document.getElementById('authSection').classList.add('d-none');
+                document.getElementById('dashboardSection').classList.remove('d-none');
+                document.getElementById('userStatus').classList.remove('d-none');
+                document.getElementById('btnLogout').classList.remove('d-none');
+                document.getElementById('userEmail').innerText = user.isAnonymous ? "Guest / Tamu" : user.email;
 
-                await loadUserSettings(user.uid);
-                loadTrades(user.uid);
+                await loadUserJournals();
             } else {
-                if (unsubscribeTrades) unsubscribeTrades();
-                authSec.classList.remove('d-none');
-                dashSec.classList.add('d-none');
-                userStatus.classList.add('d-none');
-                btnLogout.classList.add('d-none');
-                
-                resetDashboard();
+                document.getElementById('authSection').classList.remove('d-none');
+                document.getElementById('dashboardSection').classList.add('d-none');
             }
         });
 
-        // FIRESTORE OPERATIONS
-        window.saveTrade = async function(e) {
-            e.preventDefault();
+        // MULTI-JOURNAL MANAGEMENT
+        async function loadUserJournals() {
             if (!currentUser) return;
+            const journalsRef = collection(db, "users", currentUser.uid, "journals");
+            const snapshot = await getDocs(journalsRef);
 
-            const dateVal = document.getElementById('tradeDate').value;
-            const pair = document.getElementById('pair').value.toUpperCase();
-            const type = document.getElementById('type').value;
-            const lot = parseFloat(document.getElementById('lotSize').value) || 0.01;
-            const pnl = parseFloat(document.getElementById('pnl').value);
-            const notes = document.getElementById('notes').value;
+            journalsList = [];
+            snapshot.forEach(docSnap => journalsList.push({ id: docSnap.id, ...docSnap.data() }));
 
-            try {
-                await addDoc(collection(db, "users", currentUser.uid, "trades"), {
-                    date: dateVal,
-                    pair: pair,
-                    type: type,
-                    lot: lot,
-                    pnl: pnl,
-                    notes: notes,
-                    timestamp: serverTimestamp()
+            if (journalsList.length === 0) {
+                // Buat jurnal default jika belum ada
+                const defaultRef = await addDoc(collection(db, "users", currentUser.uid, "journals"), {
+                    name: "Jurnal Utama",
+                    initialBalance: 10000,
+                    createdAt: serverTimestamp()
                 });
-
-                document.getElementById('tradeForm').reset();
-                document.getElementById('tradeDate').valueAsDate = new Date();
-                document.getElementById('lotSize').value = "0.01";
-            } catch (err) {
-                alert("Gagal menyimpan data: " + err.message);
+                activeJournalId = defaultRef.id;
+                journalsList.push({ id: activeJournalId, name: "Jurnal Utama", initialBalance: 10000 });
+            } else if (!journalsList.find(j => j.id === activeJournalId)) {
+                activeJournalId = journalsList[0].id;
             }
+
+            renderJournalDropdown();
+            switchJournalData();
+        }
+
+        function renderJournalDropdown() {
+            const select = document.getElementById('journalSelect');
+            select.innerHTML = '';
+            journalsList.forEach(j => {
+                select.innerHTML += `<option value="${j.id}" ${j.id === activeJournalId ? 'selected' : ''}>${j.name}</option>`;
+            });
+        }
+
+        window.switchJournal = function() {
+            activeJournalId = document.getElementById('journalSelect').value;
+            switchJournalData();
         };
 
-        window.deleteTrade = async function(tradeId) {
-            if (!currentUser || !confirm("Yakin ingin menghapus transaksi ini?")) return;
-            try {
-                await deleteDoc(doc(db, "users", currentUser.uid, "trades", tradeId));
-            } catch (err) {
-                alert("Gagal menghapus: " + err.message);
-            }
+        function switchJournalData() {
+            const currentJournal = journalsList.find(j => j.id === activeJournalId);
+            initialBalance = currentJournal ? (currentJournal.initialBalance || 10000) : 10000;
+            document.getElementById('inputInitialBalance').value = initialBalance;
+            document.getElementById('calcBalance').value = initialBalance;
+
+            listenToJournalTrades();
+            listenToDailyPnl();
+        }
+
+        window.openCreateJournalModal = function() {
+            new bootstrap.Modal(document.getElementById('modalCreateJournal')).show();
         };
 
-        function loadTrades(userId) {
+        window.createNewJournal = async function() {
+            const name = document.getElementById('newJournalName').value.trim();
+            const bal = parseFloat(document.getElementById('newJournalBalance').value) || 10000;
+
+            if (!name) { alert("Nama jurnal tidak boleh kosong!"); return; }
+
+            const docRef = await addDoc(collection(db, "users", currentUser.uid, "journals"), {
+                name: name,
+                initialBalance: bal,
+                createdAt: serverTimestamp()
+            });
+
+            bootstrap.Modal.getInstance(document.getElementById('modalCreateJournal')).hide();
+            activeJournalId = docRef.id;
+            await loadUserJournals();
+        };
+
+        window.deleteCurrentJournal = async function() {
+            if (journalsList.length <= 1) {
+                alert("Kamu harus menyisakan setidaknya 1 jurnal!");
+                return;
+            }
+            if (!confirm("Yakin ingin menghapus jurnal ini beserta seluruh datanya?")) return;
+
+            await deleteDoc(doc(db, "users", currentUser.uid, "journals", activeJournalId));
+            activeJournalId = journalsList[0].id;
+            await loadUserJournals();
+        };
+
+        window.updateInitialBalance = async function() {
+            const val = parseFloat(document.getElementById('inputInitialBalance').value);
+            if (isNaN(val) || val < 0) return;
+            initialBalance = val;
+            document.getElementById('calcBalance').value = val;
+
+            await setDoc(doc(db, "users", currentUser.uid, "journals", activeJournalId), {
+                initialBalance: val
+            }, { merge: true });
+
+            const journalObj = journalsList.find(j => j.id === activeJournalId);
+            if (journalObj) journalObj.initialBalance = val;
+
+            renderDashboard(currentTrades);
+        };
+
+        // TRADE DATA LISTENER
+        function listenToJournalTrades() {
+            if (unsubscribeTrades) unsubscribeTrades();
             const q = query(
-                collection(db, "users", userId, "trades"), 
+                collection(db, "users", currentUser.uid, "journals", activeJournalId, "trades"),
                 orderBy("date", "asc")
             );
 
             unsubscribeTrades = onSnapshot(q, (snapshot) => {
-                const trades = [];
-                snapshot.forEach((doc) => {
-                    trades.push({ id: doc.id, ...doc.data() });
-                });
-
-                currentTrades = trades;
-                renderDashboard(trades);
+                currentTrades = [];
+                snapshot.forEach(docSnap => currentTrades.push({ id: docSnap.id, ...docSnap.data() }));
+                renderDashboard(currentTrades);
                 renderCalendar();
             });
         }
 
-        // RENDER DASHBOARD & STATS
+        // DAILY PNL MANUAL LISTENER
+        function listenToDailyPnl() {
+            if (unsubscribeDailyPnl) unsubscribeDailyPnl();
+            const colRef = collection(db, "users", currentUser.uid, "journals", activeJournalId, "dailyPnl");
+
+            unsubscribeDailyPnl = onSnapshot(colRef, (snapshot) => {
+                dailyPnlLogs = {};
+                snapshot.forEach(docSnap => {
+                    dailyPnlLogs[docSnap.id] = docSnap.data();
+                });
+                renderCalendar();
+            });
+        }
+
+        window.saveTrade = async function(e) {
+            e.preventDefault();
+            await addDoc(collection(db, "users", currentUser.uid, "journals", activeJournalId, "trades"), {
+                date: document.getElementById('tradeDate').value,
+                pair: document.getElementById('pair').value.toUpperCase(),
+                type: document.getElementById('type').value,
+                lot: parseFloat(document.getElementById('lotSize').value) || 0.01,
+                pnl: parseFloat(document.getElementById('pnl').value) || 0,
+                notes: document.getElementById('notes').value,
+                timestamp: serverTimestamp()
+            });
+
+            document.getElementById('tradeForm').reset();
+            document.getElementById('tradeDate').valueAsDate = new Date();
+        };
+
+        window.deleteTrade = async function(id) {
+            if (confirm("Hapus transaksi ini?")) {
+                await deleteDoc(doc(db, "users", currentUser.uid, "journals", activeJournalId, "trades", id));
+            }
+        };
+
+        // RENDER DASHBOARD
         function renderDashboard(trades) {
             const tbody = document.getElementById('tradeTableBody');
             tbody.innerHTML = '';
 
-            let totalTrades = trades.length;
-            let wins = 0;
-            let totalPnL = 0;
-            let totalWinAmount = 0;
-            let totalLossAmount = 0;
-
-            const chartLabels = ['Start'];
-            const chartData = [initialBalance];
+            let totalPnL = 0, wins = 0, totalWin = 0, totalLoss = 0;
+            const chartLabels = ['Start'], chartData = [initialBalance];
             let currentBalance = initialBalance;
 
             if (trades.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center py-3 text-muted">Belum ada data transaksi.</td></tr>';
             } else {
-                trades.forEach((trade) => {
-                    const pnl = trade.pnl || 0;
-                    const lot = trade.lot !== undefined ? trade.lot : '-';
-                    totalPnL += pnl;
-                    currentBalance += pnl;
+                trades.forEach(t => {
+                    totalPnL += t.pnl;
+                    currentBalance += t.pnl;
+                    if (t.pnl > 0) { wins++; totalWin += t.pnl; } else { totalLoss += Math.abs(t.pnl); }
 
-                    if (pnl > 0) {
-                        wins++;
-                        totalWinAmount += pnl;
-                    } else {
-                        totalLossAmount += Math.abs(pnl);
-                    }
-
-                    const dateStr = trade.date || (trade.timestamp ? new Date(trade.timestamp.toDate()).toISOString().split('T')[0] : '-');
-                    chartLabels.push(dateStr);
+                    chartLabels.push(t.date);
                     chartData.push(currentBalance);
-
-                    const pnlClass = pnl >= 0 ? 'text-success fw-bold' : 'text-danger fw-bold';
-                    const typeBadge = trade.type === 'BUY' ? 'bg-primary' : 'bg-warning text-dark';
 
                     tbody.innerHTML += `
                         <tr>
-                            <td>${dateStr}</td>
-                            <td><strong>${trade.pair}</strong></td>
-                            <td><span class="badge ${typeBadge}">${trade.type}</span></td>
-                            <td>${lot}</td>
-                            <td class="${pnlClass}">${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}</td>
-                            <td><small>${trade.notes || '-'}</small></td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteTrade('${trade.id}')">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </td>
+                            <td>${t.date}</td>
+                            <td><strong>${t.pair}</strong></td>
+                            <td><span class="badge ${t.type === 'BUY' ? 'bg-primary' : 'bg-warning text-dark'}">${t.type}</span></td>
+                            <td>${t.lot}</td>
+                            <td class="${t.pnl >= 0 ? 'text-success fw-bold' : 'text-danger fw-bold'}">${t.pnl >= 0 ? '+' : ''}$${t.pnl.toFixed(2)}</td>
+                            <td><small>${t.notes || '-'}</small></td>
+                            <td><button class="btn btn-sm btn-outline-danger" onclick="deleteTrade('${t.id}')"><i class="fa-solid fa-trash"></i></button></td>
                         </tr>
                     `;
                 });
             }
 
-            const winRate = totalTrades > 0 ? ((wins / totalTrades) * 100).toFixed(1) : 0;
-            const profitFactor = totalLossAmount > 0 ? (totalWinAmount / totalLossAmount).toFixed(2) : (totalWinAmount > 0 ? "∞" : "0.00");
-            const roiPercent = initialBalance > 0 ? ((totalPnL / initialBalance) * 100).toFixed(2) : 0;
+            const winRate = trades.length > 0 ? ((wins / trades.length) * 100).toFixed(1) : 0;
+            const pf = totalLoss > 0 ? (totalWin / totalLoss).toFixed(2) : (totalWin > 0 ? "∞" : "0.00");
+            const roi = initialBalance > 0 ? ((totalPnL / initialBalance) * 100).toFixed(2) : 0;
 
             document.getElementById('statBalance').innerText = `$${(initialBalance + totalPnL).toLocaleString('en-US', {minimumFractionDigits: 2})}`;
             document.getElementById('statWinRate').innerText = `${winRate}%`;
-            
-            const roiSign = roiPercent >= 0 ? '+' : '';
-            document.getElementById('statPnL').innerHTML = `$${totalPnL.toFixed(2)} <small style="font-size: 0.85rem;">(${roiSign}${roiPercent}%)</small>`;
-            document.getElementById('statPF').innerText = profitFactor;
+            document.getElementById('statPnL').innerHTML = `$${totalPnL.toFixed(2)} <small>(${roi >= 0 ? '+' : ''}${roi}%)</small>`;
+            document.getElementById('statPF').innerText = pf;
 
             updateChart(chartLabels, chartData);
         }
@@ -838,31 +749,17 @@
         function updateChart(labels, data) {
             const ctx = document.getElementById('performanceChart').getContext('2d');
             if (chartInstance) chartInstance.destroy();
-
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Saldo Akun ($)',
-                        data: data,
-                        borderColor: '#0d6efd',
-                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                        fill: true,
-                        tension: 0.2
-                    }]
+                    datasets: [{ label: 'Saldo Akun ($)', data: data, borderColor: '#0d6efd', backgroundColor: 'rgba(13, 110, 253, 0.1)', fill: true }]
                 },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: false }
-                    }
-                }
+                options: { responsive: true, plugins: { legend: { display: false } } }
             });
         }
 
-        // KALENDER PNL & STATISTIK BULANAN
+        // KALENDER PNL CUSTOM & MANUAL
         window.changeMonth = function(offset) {
             calendarDate.setMonth(calendarDate.getMonth() + offset);
             renderCalendar();
@@ -876,107 +773,138 @@
         function renderCalendar() {
             const year = calendarDate.getFullYear();
             const month = calendarDate.getMonth();
-
             const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
             document.getElementById('calendarMonthYear').innerText = `${monthNames[month]} ${year}`;
 
             const firstDay = new Date(year, month, 1).getDay();
             const totalDays = new Date(year, month + 1, 0).getDate();
 
-            // Kelompokkan data transaksi berdasarkan tanggal (YYYY-MM-DD)
-            const tradesByDate = {};
-            let monthTotalPnL = 0;
-            let monthWinCount = 0;
-            let monthTotalTrades = 0;
-            let monthBestTrade = 0;
-            let monthWorstTrade = 0;
-            let monthProfitDays = 0;
-            let monthLossDays = 0;
+            // Gabungkan data dari Transaksi Otomatis dan Custom Daily PnL
+            const combinedData = {};
 
             currentTrades.forEach(t => {
-                const dateStr = t.date || (t.timestamp ? new Date(t.timestamp.toDate()).toISOString().split('T')[0] : '');
-                if (!dateStr) return;
-
-                const [tYear, tMonth] = dateStr.split('-').map(Number);
-                
-                if (tYear === year && (tMonth - 1) === month) {
-                    if (!tradesByDate[dateStr]) tradesByDate[dateStr] = { pnl: 0, count: 0 };
-                    tradesByDate[dateStr].pnl += t.pnl;
-                    tradesByDate[dateStr].count += 1;
-
-                    monthTotalPnL += t.pnl;
-                    monthTotalTrades++;
-                    if (t.pnl > 0) monthWinCount++;
-
-                    if (t.pnl > monthBestTrade) monthBestTrade = t.pnl;
-                    if (t.pnl < monthWorstTrade) monthWorstTrade = t.pnl;
-                }
+                if (!t.date) return;
+                if (!combinedData[t.date]) combinedData[t.date] = { pnl: 0, count: 0 };
+                combinedData[t.date].pnl += t.pnl;
+                combinedData[t.date].count += 1;
             });
 
-            // Hitung Hari Profit / Rugi
-            Object.values(tradesByDate).forEach(d => {
-                if (d.pnl > 0) monthProfitDays++;
-                else if (d.pnl < 0) monthLossDays++;
+            // Overwrite / Tambahkan jika ada Log Custom Daily PnL
+            Object.keys(dailyPnlLogs).forEach(dateKey => {
+                const manual = dailyPnlLogs[dateKey];
+                combinedData[dateKey] = {
+                    pnl: manual.pnl,
+                    count: manual.trades,
+                    notes: manual.notes,
+                    isManual: true
+                };
             });
 
-            // Render stats card
-            document.getElementById('monthTotalPnL').innerText = `$${monthTotalPnL.toFixed(2)}`;
-            document.getElementById('monthTotalPnL').className = `mb-0 fw-bold ${monthTotalPnL >= 0 ? 'text-success' : 'text-danger'}`;
-            
-            const mWinRate = monthTotalTrades > 0 ? ((monthWinCount / monthTotalTrades) * 100).toFixed(1) : 0;
-            document.getElementById('monthWinRate').innerText = `${mWinRate}%`;
-            document.getElementById('monthBestTrade').innerText = `$${monthBestTrade.toFixed(2)}`;
-            document.getElementById('monthWorstTrade').innerText = `$${monthWorstTrade.toFixed(2)}`;
-            document.getElementById('monthDaysRatio').innerText = `${monthProfitDays} W / ${monthLossDays} L`;
+            let mTotalPnL = 0, mTotalTrades = 0, mProfitDays = 0, mLossDays = 0;
 
-            // Render Grid Kalender
             const grid = document.getElementById('calendarDaysGrid');
             grid.innerHTML = '';
 
-            // Blank days sebelum tanggal 1
             for (let i = 0; i < firstDay; i++) {
                 grid.innerHTML += `<div class="calendar-day empty"></div>`;
             }
 
-            // Render Tanggal 1 sampai akhir bulan
             for (let day = 1; day <= totalDays; day++) {
-                const dayStr = String(day).padStart(2, '0');
                 const monthStr = String(month + 1).padStart(2, '0');
-                const fullDateKey = `${year}-${monthStr}-${dayStr}`;
+                const dayStr = String(day).padStart(2, '0');
+                const dateKey = `${year}-${monthStr}-${dayStr}`;
 
-                const dayData = tradesByDate[fullDateKey];
-                let dayClass = '';
-                let contentHTML = '';
+                const data = combinedData[dateKey];
+                let dayClass = '', contentHTML = '';
 
-                if (dayData) {
-                    if (dayData.pnl > 0) dayClass = 'profit';
-                    else if (dayData.pnl < 0) dayClass = 'loss';
+                if (data) {
+                    if (data.pnl > 0) { dayClass = 'profit'; mProfitDays++; }
+                    else if (data.pnl < 0) { dayClass = 'loss'; mLossDays++; }
 
-                    const sign = dayData.pnl > 0 ? '+' : '';
+                    mTotalPnL += data.pnl;
+                    mTotalTrades += data.count;
+
                     contentHTML = `
-                        <div class="pnl-val ${dayData.pnl >= 0 ? 'text-success' : 'text-danger'}">${sign}$${dayData.pnl.toFixed(2)}</div>
-                        <div class="trade-count">${dayData.count} Trade${dayData.count > 1 ? 's' : ''}</div>
+                        <div class="pnl-val ${data.pnl >= 0 ? 'text-success' : 'text-danger'}">${data.pnl >= 0 ? '+' : ''}$${data.pnl.toFixed(2)}</div>
+                        <div class="trade-count">${data.count} Trade${data.count > 1 ? 's' : ''}</div>
                     `;
                 }
 
                 grid.innerHTML += `
-                    <div class="calendar-day ${dayClass}">
+                    <div class="calendar-day ${dayClass}" onclick="clickCalendarDay('${dateKey}')">
                         <div class="day-num">${day}</div>
                         ${contentHTML}
                     </div>
                 `;
             }
+
+            document.getElementById('monthTotalPnL').innerText = `$${mTotalPnL.toFixed(2)}`;
+            document.getElementById('monthTotalPnL').className = `mb-0 fw-bold ${mTotalPnL >= 0 ? 'text-success' : 'text-danger'}`;
+            document.getElementById('monthTotalTrades').innerText = mTotalTrades;
+            document.getElementById('monthProfitDays').innerText = mProfitDays;
+            document.getElementById('monthLossDays').innerText = mLossDays;
         }
 
-        // KALKULATOR LOT SIZE & RISK MANAGEMENT (BERDASARKAN PIPS & PAIR)
+        window.clickCalendarDay = function(dateStr) {
+            document.getElementById('manualDate').value = dateStr;
+            const existing = dailyPnlLogs[dateStr];
+
+            if (existing) {
+                document.getElementById('manualPnl').value = existing.pnl;
+                document.getElementById('manualTrades').value = existing.trades;
+                document.getElementById('manualNotes').value = existing.notes || '';
+                document.getElementById('btnDeletePnl').classList.remove('d-none');
+            } else {
+                document.getElementById('manualPnl').value = '';
+                document.getElementById('manualTrades').value = 1;
+                document.getElementById('manualNotes').value = '';
+                document.getElementById('btnDeletePnl').classList.add('d-none');
+            }
+
+            new bootstrap.Modal(document.getElementById('modalManualPnl')).show();
+        };
+
+        window.openManualPnlModal = function() {
+            window.clickCalendarDay(new Date().toISOString().split('T')[0]);
+        };
+
+        window.saveManualPnl = async function() {
+            const dateStr = document.getElementById('manualDate').value;
+            const pnl = parseFloat(document.getElementById('manualPnl').value);
+            const trades = parseInt(document.getElementById('manualTrades').value) || 0;
+            const notes = document.getElementById('manualNotes').value;
+
+            if (!dateStr || isNaN(pnl)) {
+                alert("Masukkan tanggal dan nilai PnL yang valid!");
+                return;
+            }
+
+            await setDoc(doc(db, "users", currentUser.uid, "journals", activeJournalId, "dailyPnl", dateStr), {
+                pnl: pnl,
+                trades: trades,
+                notes: notes,
+                updatedAt: serverTimestamp()
+            });
+
+            bootstrap.Modal.getInstance(document.getElementById('modalManualPnl')).hide();
+        };
+
+        window.deleteManualPnl = async function() {
+            const dateStr = document.getElementById('manualDate').value;
+            if (confirm(`Hapus custom log PnL untuk tanggal ${dateStr}?`)) {
+                await deleteDoc(doc(db, "users", currentUser.uid, "journals", activeJournalId, "dailyPnl", dateStr));
+                bootstrap.Modal.getInstance(document.getElementById('modalManualPnl')).hide();
+            }
+        };
+
+        // KALKULATOR
         window.calculateLotSize = function() {
             const balance = parseFloat(document.getElementById('calcBalance').value) || 0;
             const riskPercent = parseFloat(document.getElementById('calcRiskPercent').value) || 0;
             const slPips = parseFloat(document.getElementById('calcSLPipsInput').value) || 0;
             
             const pairSelect = document.getElementById('calcPairSelect');
-            const selectedOption = pairSelect.options[pairSelect.selectedIndex];
-            const pipValuePerLot = parseFloat(selectedOption.getAttribute('data-pip')) || 10;
+            const pipValuePerLot = parseFloat(pairSelect.options[pairSelect.selectedIndex].getAttribute('data-pip')) || 10;
 
             const riskAmount = balance * (riskPercent / 100);
             document.getElementById('resRiskAmount').innerText = `$${riskAmount.toFixed(2)}`;
@@ -987,21 +915,10 @@
                 return;
             }
 
-            // Rumus Lot Size: Risiko ($) / (Jarak SL dalam Pip * Nilai Pip per Lot Standard)
             const lotSize = riskAmount / (slPips * pipValuePerLot);
             document.getElementById('resLotSize').innerText = lotSize > 0 ? lotSize.toFixed(2) : '0.00';
         };
 
-        function resetDashboard() {
-            document.getElementById('tradeTableBody').innerHTML = '<tr><td colspan="7" class="text-center py-3 text-muted">Belum ada data transaksi.</td></tr>';
-            document.getElementById('statBalance').innerText = "$10,000.00";
-            document.getElementById('statWinRate').innerText = "0%";
-            document.getElementById('statPnL').innerHTML = "$0.00 <small style='font-size:0.85rem;'>(0%)</small>";
-            document.getElementById('statPF').innerText = "0.00";
-            if (chartInstance) chartInstance.destroy();
-        }
-
-        // Jalankan kalkulasi awal
         calculateLotSize();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
