@@ -399,7 +399,7 @@
                             <div class="card-body p-4">
                                 <form id="calcForm" oninput="calculateLotSize()">
                                     <div class="row mb-3">
-                                        <div class="col-md-6">
+                                        <div class="col-md-6 mb-3 mb-md-0">
                                             <label class="form-label">Modal / Balance ($)</label>
                                             <input type="number" id="calcBalance" class="form-control" value="10000" step="100">
                                         </div>
@@ -408,48 +408,64 @@
                                             <input type="number" id="calcRiskPercent" class="form-control" value="1" step="0.1">
                                         </div>
                                     </div>
+
                                     <div class="row mb-3">
-                                        <div class="col-md-4">
-                                            <label class="form-label">Harga Entry</label>
-                                            <input type="number" id="calcEntry" class="form-control" step="any" placeholder="cth: 2000.00">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <label class="form-label">Pilih Pair / Aset</label>
+                                            <select id="calcPairSelect" class="form-select" onchange="calculateLotSize()">
+                                                <option value="EUR/USD" data-pip="10">EUR/USD</option>
+                                                <option value="USD/JPY" data-pip="6.8">USD/JPY</option>
+                                                <option value="GBP/USD" data-pip="10">GBP/USD</option>
+                                                <option value="USD/CHF" data-pip="11">USD/CHF</option>
+                                                <option value="AUD/USD" data-pip="10">AUD/USD</option>
+                                                <option value="USD/CAD" data-pip="7.3">USD/CAD</option>
+                                                <option value="NZD/USD" data-pip="10">NZD/USD</option>
+                                                <option value="EUR/GBP" data-pip="12.7">EUR/GBP</option>
+                                                <option value="EUR/JPY" data-pip="6.8">EUR/JPY</option>
+                                                <option value="EUR/CHF" data-pip="11">EUR/CHF</option>
+                                                <option value="EUR/AUD" data-pip="6.5">EUR/AUD</option>
+                                                <option value="EUR/CAD" data-pip="7.3">EUR/CAD</option>
+                                                <option value="EUR/NZD" data-pip="6">EUR/NZD</option>
+                                                <option value="GBP/JPY" data-pip="6.8">GBP/JPY</option>
+                                                <option value="GBP/CHF" data-pip="11">GBP/CHF</option>
+                                                <option value="GBP/AUD" data-pip="6.5">GBP/AUD</option>
+                                                <option value="GBP/CAD" data-pip="7.3">GBP/CAD</option>
+                                                <option value="GBP/NZD" data-pip="6">GBP/NZD</option>
+                                                <option value="CHF/JPY" data-pip="6.8">CHF/JPY</option>
+                                                <option value="AUD/JPY" data-pip="6.8">AUD/JPY</option>
+                                                <option value="CAD/JPY" data-pip="6.8">CAD/JPY</option>
+                                                <option value="NZD/JPY" data-pip="6.8">NZD/JPY</option>
+                                                <option value="AUD/CHF" data-pip="11">AUD/CHF</option>
+                                                <option value="CAD/CHF" data-pip="11">CAD/CHF</option>
+                                                <option value="NZD/CHF" data-pip="11">NZD/CHF</option>
+                                                <option value="AUD/CAD" data-pip="7.3">AUD/CAD</option>
+                                                <option value="AUD/NZD" data-pip="6">AUD/NZD</option>
+                                                <option value="CAD/NZD" data-pip="6">CAD/NZD</option>
+                                                <option value="XAU/USD" data-pip="10">XAU/USD (Gold)</option>
+                                                <option value="XAG/USD" data-pip="50">XAG/USD (Silver)</option>
+                                            </select>
                                         </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">Harga Stop Loss (SL)</label>
-                                            <input type="number" id="calcSL" class="form-control" step="any" placeholder="cth: 1990.00">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Stop Loss (Pips)</label>
+                                            <input type="number" id="calcSLPipsInput" class="form-control" placeholder="Contoh: 30" value="30" step="1">
                                         </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label">Harga Take Profit (TP)</label>
-                                            <input type="number" id="calcTP" class="form-control" step="any" placeholder="cth: 2020.00">
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Instrumen / Pairs</label>
-                                        <select id="calcContractSize" class="form-select" onchange="calculateLotSize()">
-                                            <option value="100">Forex / Gold (Standard - 1 Lot = 100,000 unit / Gold 100 oz)</option>
-                                            <option value="1">Crypto / Custom (1 Lot = 1 Unit)</option>
-                                            <option value="10">Indices / Custom (1 Lot = 10 Unit)</option>
-                                        </select>
                                     </div>
                                 </form>
 
                                 <hr>
 
                                 <div class="row text-center mt-4">
-                                    <div class="col-md-3">
+                                    <div class="col-md-4 mb-2">
                                         <small class="text-muted">Risiko Maksimal ($)</small>
                                         <h3 id="resRiskAmount" class="text-danger fw-bold">$0.00</h3>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-4 mb-2">
                                         <small class="text-muted">Rekomendasi Lot Size</small>
                                         <h3 id="resLotSize" class="text-primary fw-bold">0.00</h3>
                                     </div>
-                                    <div class="col-md-3">
-                                        <small class="text-muted">Jarak SL (Pips/Poin)</small>
+                                    <div class="col-md-4 mb-2">
+                                        <small class="text-muted">Jarak SL (Pips)</small>
                                         <h3 id="resSLPips" class="fw-bold">0</h3>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <small class="text-muted">Risk : Reward (R:R)</small>
-                                        <h3 id="resRR" class="text-success fw-bold">1 : 0.0</h3>
                                     </div>
                                 </div>
                             </div>
@@ -952,40 +968,28 @@
             }
         }
 
-        // KALKULATOR LOT SIZE & RISK MANAGEMENT
+        // KALKULATOR LOT SIZE & RISK MANAGEMENT (BERDASARKAN PIPS & PAIR)
         window.calculateLotSize = function() {
             const balance = parseFloat(document.getElementById('calcBalance').value) || 0;
             const riskPercent = parseFloat(document.getElementById('calcRiskPercent').value) || 0;
-            const entry = parseFloat(document.getElementById('calcEntry').value) || 0;
-            const sl = parseFloat(document.getElementById('calcSL').value) || 0;
-            const tp = parseFloat(document.getElementById('calcTP').value) || 0;
-            const contractSizeMultiplier = parseFloat(document.getElementById('calcContractSize').value) || 100;
+            const slPips = parseFloat(document.getElementById('calcSLPipsInput').value) || 0;
+            
+            const pairSelect = document.getElementById('calcPairSelect');
+            const selectedOption = pairSelect.options[pairSelect.selectedIndex];
+            const pipValuePerLot = parseFloat(selectedOption.getAttribute('data-pip')) || 10;
 
             const riskAmount = balance * (riskPercent / 100);
             document.getElementById('resRiskAmount').innerText = `$${riskAmount.toFixed(2)}`;
+            document.getElementById('resSLPips').innerText = slPips;
 
-            if (entry <= 0 || sl <= 0 || entry === sl) {
+            if (slPips <= 0 || riskAmount <= 0) {
                 document.getElementById('resLotSize').innerText = '0.00';
-                document.getElementById('resSLPips').innerText = '0';
-                document.getElementById('resRR').innerText = '1 : 0.0';
                 return;
             }
 
-            const slDistance = Math.abs(entry - sl);
-            document.getElementById('resSLPips').innerText = slDistance.toFixed(2);
-
-            // Perhitungan Lot Size
-            const lotSize = riskAmount / (slDistance * contractSizeMultiplier);
+            // Rumus Lot Size: Risiko ($) / (Jarak SL dalam Pip * Nilai Pip per Lot Standard)
+            const lotSize = riskAmount / (slPips * pipValuePerLot);
             document.getElementById('resLotSize').innerText = lotSize > 0 ? lotSize.toFixed(2) : '0.00';
-
-            // Risk Reward Ratio
-            if (tp > 0) {
-                const tpDistance = Math.abs(tp - entry);
-                const rr = tpDistance / slDistance;
-                document.getElementById('resRR').innerText = `1 : ${rr.toFixed(2)}`;
-            } else {
-                document.getElementById('resRR').innerText = '1 : 0.0';
-            }
         };
 
         function resetDashboard() {
@@ -996,6 +1000,9 @@
             document.getElementById('statPF').innerText = "0.00";
             if (chartInstance) chartInstance.destroy();
         }
+
+        // Jalankan kalkulasi awal
+        calculateLotSize();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
