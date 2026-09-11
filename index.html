@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {
-            background-color: #f8f9fa;
+            transition: background-color 0.3s, color 0.3s;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         .navbar-brand {
@@ -25,8 +25,7 @@
             margin-bottom: 20px;
         }
         .card-header {
-            background-color: #fff;
-            border-bottom: 1px solid #edf2f7;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
             font-weight: 600;
         }
         .auth-card {
@@ -49,6 +48,55 @@
             padding: 0 10px;
             font-size: 0.85rem;
         }
+
+        /* Calendar PnL Styles */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+        .calendar-header-day {
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+            padding: 5px 0;
+        }
+        .calendar-day {
+            min-height: 75px;
+            border-radius: 8px;
+            padding: 6px;
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background-color: var(--bs-tertiary-bg);
+            border: 1px solid var(--bs-border-color);
+        }
+        .calendar-day.empty {
+            background-color: transparent;
+            border: none;
+        }
+        .calendar-day .day-num {
+            font-weight: bold;
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+        .calendar-day.profit {
+            background-color: rgba(25, 135, 84, 0.15);
+            border-color: #198754;
+        }
+        .calendar-day.loss {
+            background-color: rgba(220, 53, 69, 0.15);
+            border-color: #dc3545;
+        }
+        .pnl-val {
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+        .trade-count {
+            font-size: 0.7rem;
+            opacity: 0.75;
+        }
     </style>
 </head>
 <body>
@@ -57,18 +105,24 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
             <a class="navbar-brand" href="#"><i class="fa-solid fa-chart-line text-success me-2"></i>Jurnal Trading</a>
-            <div class="d-flex align-items-center">
+            
+            <div class="d-flex align-items-center ms-auto">
+                <!-- Theme Toggle Button -->
+                <button class="btn btn-outline-light btn-sm me-3" id="btnThemeToggle" onclick="toggleTheme()" title="Ubah Tema">
+                    <i class="fa-solid fa-moon" id="themeIcon"></i>
+                </button>
+
                 <span id="userStatus" class="navbar-text me-3 text-light d-none">
                     <i class="fa-solid fa-circle-user me-1"></i> <span id="userEmail"></span>
                 </span>
-                <button id="btnLogout" class="btn btn-outline-light btn-sm d-none" onclick="logoutUser()">
+                <button id="btnLogout" class="btn btn-outline-danger btn-sm d-none" onclick="logoutUser()">
                     <i class="fa-solid fa-right-from-bracket me-1"></i>Keluar
                 </button>
             </div>
         </div>
     </nav>
 
-    <!-- SECTION 1: AUTHENTICATION (Login, Sign Up & Guest) -->
+    <!-- SECTION 1: AUTHENTICATION -->
     <div id="authSection" class="container">
         <div class="card auth-card">
             <div class="card-header text-center py-3">
@@ -95,7 +149,6 @@
                     <span>atau</span>
                 </div>
 
-                <!-- Tombol Masuk Guest / Tamu -->
                 <button class="btn btn-outline-secondary w-100 mb-3" onclick="handleGuestLogin()">
                     <i class="fa-solid fa-user-secret me-1"></i>Masuk sebagai Guest (Tamu)
                 </button>
@@ -110,114 +163,276 @@
     <!-- SECTION 2: DASHBOARD TRADING -->
     <div id="dashboardSection" class="container mt-4 d-none">
         
-        <!-- Summary Cards -->
-        <div class="row">
-            <div class="col-md-3">
-                <div class="card text-white bg-primary">
-                    <div class="card-body">
-                        <h6 class="card-title">Total Trade</h6>
-                        <h2 id="statTotal" class="mb-0">0</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-white bg-success">
-                    <div class="card-body">
-                        <h6 class="card-title">Win Rate</h6>
-                        <h2 id="statWinRate" class="mb-0">0%</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-white bg-info">
-                    <div class="card-body">
-                        <h6 class="card-title">Total Profit/Loss</h6>
-                        <h2 id="statPnL" class="mb-0">$0.00</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card text-white bg-secondary">
-                    <div class="card-body">
-                        <h6 class="card-title">Profit Factor</h6>
-                        <h2 id="statPF" class="mb-0">0.00</h2>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <!-- Navigation Tabs / Menu -->
+        <ul class="nav nav-pills mb-4" id="mainTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#tabDashboard" type="button" role="tab">
+                    <i class="fa-solid fa-gauge me-1"></i> Dashboard & Journal
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="calendar-tab" data-bs-toggle="tab" data-bs-target="#tabCalendar" type="button" role="tab">
+                    <i class="fa-solid fa-calendar-days me-1"></i> Kalender PnL
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="calc-tab" data-bs-toggle="tab" data-bs-target="#tabCalculator" type="button" role="tab">
+                    <i class="fa-solid fa-calculator me-1"></i> Kalkulator Lot & Risk
+                </button>
+            </li>
+        </ul>
 
-        <div class="row">
-            <!-- Form Input Trade -->
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fa-solid fa-plus me-1"></i>Tambah Transaksi
-                    </div>
-                    <div class="card-body">
-                        <form id="tradeForm" onsubmit="saveTrade(event)">
-                            <div class="mb-3">
-                                <label class="form-label">Pasangan / Aset</label>
-                                <input type="text" id="pair" class="form-control" placeholder="Contoh: EURUSD, XAUUSD" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Tipe</label>
-                                <select id="type" class="form-select" required>
-                                    <option value="BUY">BUY</option>
-                                    <option value="SELL">SELL</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Hasil (P/L $)</label>
-                                <input type="number" step="0.01" id="pnl" class="form-control" placeholder="Contoh: 50 atau -25" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Catatan / Alasan</label>
-                                <textarea id="notes" class="form-control" rows="2" placeholder="Catatan analisis..."></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-success w-100">Simpan Trade</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
+        <div class="tab-content" id="mainTabContent">
 
-            <!-- Tabel & Grafik -->
-            <div class="col-md-8">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <i class="fa-solid fa-chart-line me-1"></i>Grafik Performa Portfolio
+            <!-- TAB 1: DASHBOARD & JOURNAL -->
+            <div class="tab-pane fade show active" id="tabDashboard" role="tabpanel">
+                <!-- Summary Cards -->
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card text-white bg-primary">
+                            <div class="card-body">
+                                <h6 class="card-title">Total Trade</h6>
+                                <h2 id="statTotal" class="mb-0">0</h2>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <canvas id="performanceChart" height="100"></canvas>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-success">
+                            <div class="card-body">
+                                <h6 class="card-title">Win Rate (All)</h6>
+                                <h2 id="statWinRate" class="mb-0">0%</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-info">
+                            <div class="card-body">
+                                <h6 class="card-title">Total Profit/Loss</h6>
+                                <h2 id="statPnL" class="mb-0">$0.00</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card text-white bg-secondary">
+                            <div class="card-body">
+                                <h6 class="card-title">Profit Factor</h6>
+                                <h2 id="statPF" class="mb-0">0.00</h2>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header">
-                        <i class="fa-solid fa-list me-1"></i>Riwayat Transaksi
+                <div class="row">
+                    <!-- Form Input Trade -->
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="fa-solid fa-plus me-1"></i>Tambah Transaksi
+                            </div>
+                            <div class="card-body">
+                                <form id="tradeForm" onsubmit="saveTrade(event)">
+                                    <div class="mb-3">
+                                        <label class="form-label">Tanggal Transaksi</label>
+                                        <input type="date" id="tradeDate" class="form-control" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Pasangan / Aset</label>
+                                        <input type="text" id="pair" class="form-control" placeholder="Contoh: EURUSD, XAUUSD" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Tipe</label>
+                                        <select id="type" class="form-select" required>
+                                            <option value="BUY">BUY</option>
+                                            <option value="SELL">SELL</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Hasil (P/L $)</label>
+                                        <input type="number" step="0.01" id="pnl" class="form-control" placeholder="Contoh: 50 atau -25" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Catatan / Alasan</label>
+                                        <textarea id="notes" class="form-control" rows="2" placeholder="Catatan analisis..."></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-success w-100">Simpan Trade</button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0 align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Tanggal</th>
-                                        <th>Aset</th>
-                                        <th>Tipe</th>
-                                        <th>P/L ($)</th>
-                                        <th>Catatan</th>
-                                        <th>Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tradeTableBody">
-                                    <tr>
-                                        <td colspan="6" class="text-center py-3 text-muted">Belum ada data transaksi.</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+
+                    <!-- Tabel & Grafik -->
+                    <div class="col-md-8">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <i class="fa-solid fa-chart-line me-1"></i>Grafik Performa Portfolio
+                            </div>
+                            <div class="card-body">
+                                <canvas id="performanceChart" height="100"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="fa-solid fa-list me-1"></i>Riwayat Transaksi
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover mb-0 align-middle">
+                                        <thead>
+                                            <tr>
+                                                <th>Tanggal</th>
+                                                <th>Aset</th>
+                                                <th>Tipe</th>
+                                                <th>P/L ($)</th>
+                                                <th>Catatan</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="tradeTableBody">
+                                            <tr>
+                                                <td colspan="6" class="text-center py-3 text-muted">Belum ada data transaksi.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- TAB 2: KALENDER PNL (PROP FIRM STYLE) -->
+            <div class="tab-pane fade" id="tabCalendar" role="tabpanel">
+                <div class="row mb-3">
+                    <div class="col-md-8 d-flex align-items-center gap-2">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="changeMonth(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                        <h4 class="mb-0 fw-bold" id="calendarMonthYear">Bulan Tahun</h4>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="changeMonth(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                        <button class="btn btn-sm btn-link" onclick="resetCalendarToCurrent()">Bulan Ini</button>
+                    </div>
+                </div>
+
+                <!-- Monthly Stats Summary -->
+                <div class="row mb-4">
+                    <div class="col-md-20 col-sm-6 mb-2">
+                        <div class="card p-3 text-center">
+                            <small class="text-muted">Total PnL Bulan Ini</small>
+                            <h4 id="monthTotalPnL" class="mb-0 fw-bold">$0.00</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-20 col-sm-6 mb-2">
+                        <div class="card p-3 text-center">
+                            <small class="text-muted">Win Rate Bulan Ini</small>
+                            <h4 id="monthWinRate" class="mb-0 fw-bold">0%</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-20 col-sm-6 mb-2">
+                        <div class="card p-3 text-center">
+                            <small class="text-muted">Profit Terbesar</small>
+                            <h4 id="monthBestTrade" class="mb-0 text-success fw-bold">$0.00</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-20 col-sm-6 mb-2">
+                        <div class="card p-3 text-center">
+                            <small class="text-muted">Rugi Terbesar</small>
+                            <h4 id="monthWorstTrade" class="mb-0 text-danger fw-bold">$0.00</h4>
+                        </div>
+                    </div>
+                    <div class="col-md-20 col-sm-12 mb-2">
+                        <div class="card p-3 text-center">
+                            <small class="text-muted">Hari Profit / Rugi</small>
+                            <h4 id="monthDaysRatio" class="mb-0 fw-bold">0 / 0</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grid Kalender -->
+                <div class="card p-3">
+                    <div class="calendar-grid mb-2">
+                        <div class="calendar-header-day text-danger">Ming</div>
+                        <div class="calendar-header-day">Sen</div>
+                        <div class="calendar-header-day">Sel</div>
+                        <div class="calendar-header-day">Rab</div>
+                        <div class="calendar-header-day">Kam</div>
+                        <div class="calendar-header-day">Jum</div>
+                        <div class="calendar-header-day text-primary">Sab</div>
+                    </div>
+                    <div class="calendar-grid" id="calendarDaysGrid">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: KALKULATOR LOT & RISK -->
+            <div class="tab-pane fade" id="tabCalculator" role="tabpanel">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <i class="fa-solid fa-calculator me-2"></i>Kalkulator Lot Size & Risk Management
+                            </div>
+                            <div class="card-body p-4">
+                                <form id="calcForm" oninput="calculateLotSize()">
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label">Modal / Balance ($)</label>
+                                            <input type="number" id="calcBalance" class="form-control" value="10000" step="100">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label">Risiko per Trade (%)</label>
+                                            <input type="number" id="calcRiskPercent" class="form-control" value="1" step="0.1">
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label">Harga Entry</label>
+                                            <input type="number" id="calcEntry" class="form-control" step="any" placeholder="cth: 2000.00">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Harga Stop Loss (SL)</label>
+                                            <input type="number" id="calcSL" class="form-control" step="any" placeholder="cth: 1990.00">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Harga Take Profit (TP)</label>
+                                            <input type="number" id="calcTP" class="form-control" step="any" placeholder="cth: 2020.00">
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Instrumen / Pairs</label>
+                                        <select id="calcContractSize" class="form-select" onchange="calculateLotSize()">
+                                            <option value="100">Forex / Gold (Standard - 1 Lot = 100,000 unit / Gold 100 oz)</option>
+                                            <option value="1">Crypto / Custom (1 Lot = 1 Unit)</option>
+                                            <option value="10">Indices / Custom (1 Lot = 10 Unit)</option>
+                                        </select>
+                                    </div>
+                                </form>
+
+                                <hr>
+
+                                <div class="row text-center mt-4">
+                                    <div class="col-md-3">
+                                        <small class="text-muted">Risiko Maksimal ($)</small>
+                                        <h3 id="resRiskAmount" class="text-danger fw-bold">$0.00</h3>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted">Rekomendasi Lot Size</small>
+                                        <h3 id="resLotSize" class="text-primary fw-bold">0.00</h3>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted">Jarak SL (Pips/Poin)</small>
+                                        <h3 id="resSLPips" class="fw-bold">0</h3>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <small class="text-muted">Risk : Reward (R:R)</small>
+                                        <h3 id="resRR" class="text-success fw-bold">1 : 0.0</h3>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
     </div>
@@ -257,7 +472,6 @@
             measurementId: "G-Q2GV8YF6ME"
         };
 
-        // Inisialisasi
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -266,7 +480,40 @@
         let currentUser = null;
         let chartInstance = null;
         let unsubscribeTrades = null;
+        let currentTrades = [];
 
+        // Current view date for calendar
+        let calendarDate = new Date();
+
+        // Default input tanggal di form
+        document.getElementById('tradeDate').valueAsDate = new Date();
+
+        // TEMA SWITCHER (LIGHT/DARK)
+        window.toggleTheme = function() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        };
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('themeIcon');
+            if (theme === 'dark') {
+                icon.className = 'fa-solid fa-sun text-warning';
+            } else {
+                icon.className = 'fa-solid fa-moon';
+            }
+        }
+
+        // Init theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+
+        // AUTHENTICATION
         window.toggleAuthMode = function(signUp) {
             isSignUpMode = signUp;
             const title = document.getElementById('authTitle');
@@ -287,7 +534,6 @@
             }
         };
 
-        // Login / Register via Email
         window.handleAuth = async function(e) {
             e.preventDefault();
             const email = document.getElementById('email').value;
@@ -307,7 +553,6 @@
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     const user = userCredential.user;
 
-                    // Buat profil pengguna
                     await setDoc(doc(db, "users", user.uid), {
                         email: user.email,
                         createdAt: serverTimestamp()
@@ -329,7 +574,6 @@
             }
         };
 
-        // Login Mode Guest / Tamu
         window.handleGuestLogin = async function() {
             const alertBox = document.getElementById('authAlert');
             alertBox.classList.add('d-none');
@@ -378,10 +622,12 @@
             }
         });
 
+        // FIRESTORE OPERATIONS
         window.saveTrade = async function(e) {
             e.preventDefault();
             if (!currentUser) return;
 
+            const dateVal = document.getElementById('tradeDate').value;
             const pair = document.getElementById('pair').value.toUpperCase();
             const type = document.getElementById('type').value;
             const pnl = parseFloat(document.getElementById('pnl').value);
@@ -389,6 +635,7 @@
 
             try {
                 await addDoc(collection(db, "users", currentUser.uid, "trades"), {
+                    date: dateVal,
                     pair: pair,
                     type: type,
                     pnl: pnl,
@@ -397,8 +644,9 @@
                 });
 
                 document.getElementById('tradeForm').reset();
+                document.getElementById('tradeDate').valueAsDate = new Date();
             } catch (err) {
-                alert("Gagal menyimpan data. Pastikan Firebase Firestore Rules mengizinkan akses simpan: " + err.message);
+                alert("Gagal menyimpan data: " + err.message);
             }
         };
 
@@ -414,7 +662,7 @@
         function loadTrades(userId) {
             const q = query(
                 collection(db, "users", userId, "trades"), 
-                orderBy("timestamp", "asc")
+                orderBy("date", "asc")
             );
 
             unsubscribeTrades = onSnapshot(q, (snapshot) => {
@@ -423,10 +671,13 @@
                     trades.push({ id: doc.id, ...doc.data() });
                 });
 
+                currentTrades = trades;
                 renderDashboard(trades);
+                renderCalendar();
             });
         }
 
+        // RENDER DASHBOARD & STATS
         function renderDashboard(trades) {
             const tbody = document.getElementById('tradeTableBody');
             tbody.innerHTML = '';
@@ -456,7 +707,7 @@
                         totalLossAmount += Math.abs(pnl);
                     }
 
-                    const dateStr = trade.timestamp ? new Date(trade.timestamp.toDate()).toLocaleDateString('id-ID') : '-';
+                    const dateStr = trade.date || (trade.timestamp ? new Date(trade.timestamp.toDate()).toISOString().split('T')[0] : '-');
                     chartLabels.push(dateStr);
                     chartData.push(cumulativePnL);
 
@@ -517,6 +768,148 @@
                 }
             });
         }
+
+        // KALENDER PNL & STATISTIK BULANAN
+        window.changeMonth = function(offset) {
+            calendarDate.setMonth(calendarDate.getMonth() + offset);
+            renderCalendar();
+        };
+
+        window.resetCalendarToCurrent = function() {
+            calendarDate = new Date();
+            renderCalendar();
+        };
+
+        function renderCalendar() {
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+
+            const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            document.getElementById('calendarMonthYear').innerText = `${monthNames[month]} ${year}`;
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+
+            // Kelompokkan data transaksi berdasarkan tanggal (YYYY-MM-DD)
+            const tradesByDate = {};
+            let monthTotalPnL = 0;
+            let monthWinCount = 0;
+            let monthTotalTrades = 0;
+            let monthBestTrade = 0;
+            let monthWorstTrade = 0;
+            let monthProfitDays = 0;
+            let monthLossDays = 0;
+
+            currentTrades.forEach(t => {
+                const dateStr = t.date || (t.timestamp ? new Date(t.timestamp.toDate()).toISOString().split('T')[0] : '');
+                if (!dateStr) return;
+
+                const [tYear, tMonth] = dateStr.split('-').map(Number);
+                
+                if (tYear === year && (tMonth - 1) === month) {
+                    if (!tradesByDate[dateStr]) tradesByDate[dateStr] = { pnl: 0, count: 0 };
+                    tradesByDate[dateStr].pnl += t.pnl;
+                    tradesByDate[dateStr].count += 1;
+
+                    monthTotalPnL += t.pnl;
+                    monthTotalTrades++;
+                    if (t.pnl > 0) monthWinCount++;
+
+                    if (t.pnl > monthBestTrade) monthBestTrade = t.pnl;
+                    if (t.pnl < monthWorstTrade) monthWorstTrade = t.pnl;
+                }
+            });
+
+            // Hitung Hari Profit / Rugi
+            Object.values(tradesByDate).forEach(d => {
+                if (d.pnl > 0) monthProfitDays++;
+                else if (d.pnl < 0) monthLossDays++;
+            });
+
+            // Render stats card
+            document.getElementById('monthTotalPnL').innerText = `$${monthTotalPnL.toFixed(2)}`;
+            document.getElementById('monthTotalPnL').className = `mb-0 fw-bold ${monthTotalPnL >= 0 ? 'text-success' : 'text-danger'}`;
+            
+            const mWinRate = monthTotalTrades > 0 ? ((monthWinCount / monthTotalTrades) * 100).toFixed(1) : 0;
+            document.getElementById('monthWinRate').innerText = `${mWinRate}%`;
+            document.getElementById('monthBestTrade').innerText = `$${monthBestTrade.toFixed(2)}`;
+            document.getElementById('monthWorstTrade').innerText = `$${monthWorstTrade.toFixed(2)}`;
+            document.getElementById('monthDaysRatio').innerText = `${monthProfitDays} W / ${monthLossDays} L`;
+
+            // Render Grid Kalender
+            const grid = document.getElementById('calendarDaysGrid');
+            grid.innerHTML = '';
+
+            // Blank days sebelum tanggal 1
+            for (let i = 0; i < firstDay; i++) {
+                grid.innerHTML += `<div class="calendar-day empty"></div>`;
+            }
+
+            // Render Tanggal 1 sampai akhir bulan
+            for (let day = 1; day <= totalDays; day++) {
+                const dayStr = String(day).padStart(2, '0');
+                const monthStr = String(month + 1).padStart(2, '0');
+                const fullDateKey = `${year}-${monthStr}-${dayStr}`;
+
+                const dayData = tradesByDate[fullDateKey];
+                let dayClass = '';
+                let contentHTML = '';
+
+                if (dayData) {
+                    if (dayData.pnl > 0) dayClass = 'profit';
+                    else if (dayData.pnl < 0) dayClass = 'loss';
+
+                    const sign = dayData.pnl > 0 ? '+' : '';
+                    contentHTML = `
+                        <div class="pnl-val ${dayData.pnl >= 0 ? 'text-success' : 'text-danger'}">${sign}$${dayData.pnl.toFixed(2)}</div>
+                        <div class="trade-count">${dayData.count} Trade${dayData.count > 1 ? 's' : ''}</div>
+                    `;
+                }
+
+                grid.innerHTML += `
+                    <div class="calendar-day ${dayClass}">
+                        <div class="day-num">${day}</div>
+                        ${contentHTML}
+                    </div>
+                `;
+            }
+        }
+
+        // KALKULATOR LOT SIZE & RISK MANAGEMENT
+        window.calculateLotSize = function() {
+            const balance = parseFloat(document.getElementById('calcBalance').value) || 0;
+            const riskPercent = parseFloat(document.getElementById('calcRiskPercent').value) || 0;
+            const entry = parseFloat(document.getElementById('calcEntry').value) || 0;
+            const sl = parseFloat(document.getElementById('calcSL').value) || 0;
+            const tp = parseFloat(document.getElementById('calcTP').value) || 0;
+            const contractSizeMultiplier = parseFloat(document.getElementById('calcContractSize').value) || 100;
+
+            const riskAmount = balance * (riskPercent / 100);
+            document.getElementById('resRiskAmount').innerText = `$${riskAmount.toFixed(2)}`;
+
+            if (entry <= 0 || sl <= 0 || entry === sl) {
+                document.getElementById('resLotSize').innerText = '0.00';
+                document.getElementById('resSLPips').innerText = '0';
+                document.getElementById('resRR').innerText = '1 : 0.0';
+                return;
+            }
+
+            const slDistance = Math.abs(entry - sl);
+            document.getElementById('resSLPips').innerText = slDistance.toFixed(2);
+
+            // Perhitungan Lot Size
+            const lotSize = riskAmount / (slDistance * contractSizeMultiplier);
+            document.getElementById('resLotSize').innerText = lotSize > 0 ? lotSize.toFixed(2) : '0.00';
+
+            // Risk Reward Ratio
+            if (tp > 0) {
+                const tpDistance = Math.abs(tp - entry);
+                const rr = tpDistance / slDistance;
+                document.getElementById('resRR').innerText = `1 : ${rr.toFixed(2)}`;
+            } else {
+                document.getElementById('resRR').innerText = '1 : 0.0';
+            }
+        };
 
         function resetDashboard() {
             document.getElementById('tradeTableBody').innerHTML = '<tr><td colspan="6" class="text-center py-3 text-muted">Belum ada data transaksi.</td></tr>';
