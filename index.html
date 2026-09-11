@@ -503,10 +503,10 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { 
-            getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInAnonymously, onAuthStateChanged, signOut 
+            getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInAnonymously, onAuthStateChanged, signOut, updateProfile 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { 
-            getFirestore, doc, setDoc, collection, addDoc, onSnapshot, deleteDoc, query, orderBy, serverTimestamp, getDocs 
+            getFirestore, doc, setDoc, getDoc, collection, addDoc, onSnapshot, deleteDoc, query, orderBy, serverTimestamp, getDocs 
         } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -535,7 +535,6 @@
         let dailyPnlLogs = {};
         let calendarDate = new Date();
         let tvWidgetLoaded = false;
-
         document.getElementById('tradeDate').valueAsDate = new Date();
 
         window.toggleTheme = function() {
