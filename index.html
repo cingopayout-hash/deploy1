@@ -92,10 +92,13 @@
     <div id="authContainer">
         <div class="card p-4 shadow-lg" style="max-width: 400px; width: 100%;">
             <div class="text-center mb-4">
-                <i class="fas me-2 text-primary fa-chart-line fa-2x"></i>
+                <i class="fas text-primary fa-chart-line fa-2x"></i>
                 <h4 class="mt-2 fw-bold">Trading Journal</h4>
                 <p class="text-muted small">Catat & Analisa Performa Trading Anda</p>
             </div>
+
+            <!-- Pesan Notifikasi Alert -->
+            <div id="authAlert" class="alert alert-danger d-none small py-2" role="alert"></div>
 
             <form id="authForm" onsubmit="event.preventDefault();">
                 <div class="mb-3">
@@ -106,10 +109,10 @@
                     <label class="form-label small">Password</label>
                     <input type="password" id="authPassword" class="form-control" placeholder="••••••••" required>
                 </div>
-                <button type="button" onclick="handleAuth('login')" class="btn btn-primary w-100 mb-2">
+                <button type="button" id="btnLogin" onclick="handleAuth('login')" class="btn btn-primary w-100 mb-2">
                     <i class="fas fa-sign-in-alt me-1"></i> Masuk
                 </button>
-                <button type="button" onclick="handleAuth('register')" class="btn btn-outline-light w-100 mb-3">
+                <button type="button" id="btnRegister" onclick="handleAuth('register')" class="btn btn-outline-light w-100 mb-3">
                     <i class="fas fa-user-plus me-1"></i> Buat Akun Baru
                 </button>
             </form>
@@ -139,7 +142,7 @@
                     </span>
                     <span id="userDisplay" class="text-muted small"></span>
                     <button onclick="handleLogout()" class="btn btn-sm btn-outline-danger">
-                        <i class="fas fa-sign-out-alt"></i>
+                        <i class="fas fa-sign-out-alt"></i> Keluar
                     </button>
                 </div>
             </div>
@@ -240,7 +243,7 @@
             </ul>
 
             <div class="tab-content" id="mainTabContent">
-                <!-- TAB 1: LIST TRADES & FORM -->
+                <!-- TAB 1: LIST TRADES -->
                 <div class="tab-pane fade show active" id="trades-pane">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="m-0 fw-bold">Jurnal Transaksi</h5>
@@ -349,7 +352,8 @@
 
     <script>
         // ==========================================
-        // CONFIGURATION FIREBASE (SALIN DATA ASLI DISINI)
+        // CONFIGURATION FIREBASE
+        // (Ganti nilai di bawah dengan data dari Firebase Console jika ada)
         // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyAeWvYIS_-SRSc-AINGNa7hTDOGmraxU7o",
@@ -361,33 +365,41 @@
 			measurementId: "G-Q2GV8YF6ME"
         };
 
-        // Initialize Firebase
         let db = null;
         let auth = null;
         let currentUser = null;
         let trades = [];
         let equityChartInstance = null;
 
+        // Inisialisasi Firebase dengan proteksi error
         try {
-            if (typeof firebase !== 'undefined') {
+            if (typeof firebase !== 'undefined' && firebaseConfig.apiKey && !firebaseConfig.apiKey.includes('DUMMY')) {
                 firebase.initializeApp(firebaseConfig);
                 auth = firebase.auth();
                 db = firebase.firestore();
             }
         } catch (e) {
-            console.warn("Firebase belum dikonfigurasi lengkap. Menggunakan penyimpanan lokal.");
+            console.warn("Firebase tidak diinisialisasi. Berjalan dalam mode penyimpanan lokal.");
         }
 
-        // INIT APPLICATION
         window.addEventListener('DOMContentLoaded', () => {
             initAuthListener();
             calculateRisk();
         });
 
-        // AUTH SYSTEM & LISTENER
+        function showAlert(msg) {
+            const alertEl = document.getElementById('authAlert');
+            alertEl.innerText = msg;
+            alertEl.classList.remove('d-none');
+        }
+
+        function hideAlert() {
+            document.getElementById('authAlert').classList.add('d-none');
+        }
+
+        // AUTH LISTENER
         function initAuthListener() {
-            // Check Local Guest Sesi
-            const guestUser = localStorage.getItem('guest_user');
+            const guestUser = localStorage.getItem('journal_active_user');
             if (guestUser) {
                 currentUser = JSON.parse(guestUser);
                 setupDashboard(true);
@@ -400,31 +412,51 @@
                         currentUser = user;
                         setupDashboard(false);
                     } else {
-                        currentUser = null;
-                        document.getElementById('authContainer').classList.remove('d-none');
-                        document.getElementById('appContainer').classList.add('d-none');
+                        showAuthContainer();
                     }
                 });
             } else {
-                document.getElementById('authContainer').classList.remove('d-none');
-                document.getElementById('appContainer').classList.add('d-none');
+                showAuthContainer();
             }
         }
 
-        // LOGIN / REGISTER HANDLER
+        function showAuthContainer() {
+            document.getElementById('authContainer').classList.remove('d-none');
+            document.getElementById('appContainer').classList.add('d-none');
+        }
+
+        // HANDLE LOGIN & REGISTER
         async function handleAuth(mode) {
-            const email = document.getElementById('authEmail').value;
-            const password = document.getElementById('authPassword').value;
+            hideAlert();
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value.trim();
 
             if (!email || !password) {
-                alert('Silakan isi email dan password.');
+                showAlert('Silakan isi email dan password terlebih dahulu.');
                 return;
             }
 
-            if (!auth) {
-                alert('Firebase belum terhubung. Silakan gunakan mode tamu.');
+            if (password.length < 6) {
+                showAlert('Password minimal 6 karakter.');
                 return;
             }
+
+            // Jika Firebase belum aktif/masih dummy -> buat akun lokal otomatis
+            if (!auth || firebaseConfig.apiKey.includes('DUMMY')) {
+                const localUser = {
+                    uid: 'user_' + btoa(email).replace(/=/g, ''),
+                    email: email
+                };
+                localStorage.setItem('journal_active_user', JSON.stringify(localUser));
+                currentUser = localUser;
+                setupDashboard(true);
+                return;
+            }
+
+            const btn = mode === 'login' ? document.getElementById('btnLogin') : document.getElementById('btnRegister');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Memproses...';
 
             try {
                 if (mode === 'login') {
@@ -432,54 +464,66 @@
                 } else {
                     await auth.createUserWithEmailAndPassword(email, password);
                 }
-                localStorage.removeItem('guest_user');
             } catch (err) {
-                alert('Autentikasi Gagal: ' + err.message);
+                console.error("Auth Error:", err);
+                let errorMessage = err.message;
+                if (err.code === 'auth/email-already-in-use') errorMessage = 'Email ini sudah terdaftar. Silakan klik Masuk.';
+                if (err.code === 'auth/wrong-password') errorMessage = 'Password salah.';
+                if (err.code === 'auth/user-not-found') errorMessage = 'Akun tidak ditemukan. Silakan Buat Akun Baru.';
+                if (err.code === 'auth/invalid-api-key') {
+                    errorMessage = 'Firebase API Key belum valid. Beralih ke penyimpanan lokal...';
+                    setTimeout(() => loginAsGuest(email), 1000);
+                }
+                showAlert(errorMessage);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             }
         }
 
-        function loginAsGuest() {
-            const guestObj = { uid: 'guest_' + Date.now(), email: 'Tamu (Storage Lokal)' };
-            localStorage.setItem('guest_user', JSON.stringify(guestObj));
+        function loginAsGuest(customEmail) {
+            const email = customEmail || 'Tamu (Lokal)';
+            const guestObj = { uid: 'guest_' + Date.now(), email: email };
+            localStorage.setItem('journal_active_user', JSON.stringify(guestObj));
             currentUser = guestObj;
             setupDashboard(true);
         }
 
         function handleLogout() {
-            localStorage.removeItem('guest_user');
+            localStorage.removeItem('journal_active_user');
             if (auth) auth.signOut();
             location.reload();
         }
 
-        // DASHBOARD SETUP & DATA SYNC
-        async function setupDashboard(isGuest) {
+        // DASHBOARD SETUP
+        async function setupDashboard(isLocal) {
             document.getElementById('authContainer').classList.add('d-none');
             document.getElementById('appContainer').classList.remove('d-none');
             document.getElementById('userDisplay').innerText = currentUser.email;
 
             const syncStatus = document.getElementById('syncStatus');
 
-            if (isGuest || !db) {
+            if (isLocal || !db) {
                 syncStatus.className = 'sync-badge bg-warning text-dark';
                 syncStatus.innerHTML = '<i class="fas fa-hdd me-1"></i> Penyimpanan Lokal';
                 loadLocalTrades();
             } else {
                 syncStatus.className = 'sync-badge bg-success text-white';
-                syncStatus.innerHTML = '<i class="fas fa-cloud me-1"></i> Cloud Synced';
+                syncStatus.innerHTML = '<i class="fas fa-cloud me-1"></i> Terhubung Cloud';
                 await loadCloudTrades();
             }
 
             renderDashboard();
         }
 
-        // DATA STORAGE (LOCAL & CLOUD)
+        // DATA STORAGE
         function loadLocalTrades() {
-            const stored = localStorage.getItem('trading_journal_' + currentUser.uid);
+            const stored = localStorage.getItem('trades_' + currentUser.uid);
             trades = stored ? JSON.parse(stored) : [];
         }
 
         function saveLocalTrades() {
-            localStorage.setItem('trading_journal_' + currentUser.uid, JSON.stringify(trades));
+            localStorage.setItem('trades_' + currentUser.uid, JSON.stringify(trades));
         }
 
         async function loadCloudTrades() {
@@ -487,35 +531,40 @@
                 const snapshot = await db.collection('users').doc(currentUser.uid).collection('trades').get();
                 trades = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             } catch (err) {
-                console.error("Gagal muat cloud:", err);
+                console.error("Gagal muat cloud, beralih ke lokal:", err);
                 loadLocalTrades();
             }
         }
 
         async function saveTradeToStorage(trade) {
-            if (currentUser.uid.startsWith('guest_') || !db) {
+            const isLocalUser = currentUser.uid.startsWith('guest_') || currentUser.uid.startsWith('user_') || !db;
+            if (isLocalUser) {
                 const idx = trades.findIndex(t => t.id === trade.id);
                 if (idx >= 0) trades[idx] = trade;
                 else trades.push(trade);
                 saveLocalTrades();
             } else {
-                const docRef = db.collection('users').doc(currentUser.uid).collection('trades').doc(trade.id);
-                await docRef.set(trade);
-                const idx = trades.findIndex(t => t.id === trade.id);
-                if (idx >= 0) trades[idx] = trade;
-                else trades.push(trade);
+                try {
+                    const docRef = db.collection('users').doc(currentUser.uid).collection('trades').doc(trade.id);
+                    await docRef.set(trade);
+                    const idx = trades.findIndex(t => t.id === trade.id);
+                    if (idx >= 0) trades[idx] = trade;
+                    else trades.push(trade);
+                } catch (e) {
+                    console.error("Error save cloud:", e);
+                    saveLocalTrades();
+                }
             }
             renderDashboard();
         }
 
-        // RISK CALCULATOR LOGIC
+        // RISK CALCULATOR
         function calculateRisk() {
             const balance = parseFloat(document.getElementById('calcBalance').value) || 0;
             const riskPct = parseFloat(document.getElementById('calcRiskPct').value) || 0;
             const slPips = parseFloat(document.getElementById('calcSLPips').value) || 1;
 
             const riskAmount = balance * (riskPct / 100);
-            // Estimasi sederhana $10 per pip per lot standar
             const lotSize = (riskAmount / (slPips * 10)).toFixed(2);
 
             document.getElementById('resRiskAmount').innerText = '$' + riskAmount.toFixed(2);
@@ -528,7 +577,7 @@
             openTradeModal();
         }
 
-        // RENDER FUNCTIONS
+        // RENDERING
         function renderDashboard() {
             renderTable();
             renderStats();
@@ -627,7 +676,7 @@
             });
         }
 
-        // MODAL & TRADE ACTIONS
+        // MODAL ACTIONS
         function openTradeModal() {
             document.getElementById('tradeForm').reset();
             document.getElementById('tradeId').value = 'trd_' + Date.now();
@@ -655,11 +704,14 @@
         async function deleteTrade(id) {
             if (!confirm('Hapus transaksi ini?')) return;
 
-            if (currentUser.uid.startsWith('guest_') || !db) {
+            const isLocalUser = currentUser.uid.startsWith('guest_') || currentUser.uid.startsWith('user_') || !db;
+            if (isLocalUser) {
                 trades = trades.filter(t => t.id !== id);
                 saveLocalTrades();
             } else {
-                await db.collection('users').doc(currentUser.uid).collection('trades').doc(id).delete();
+                try {
+                    await db.collection('users').doc(currentUser.uid).collection('trades').doc(id).delete();
+                } catch (e) { console.error(e); }
                 trades = trades.filter(t => t.id !== id);
             }
             renderDashboard();
