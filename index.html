@@ -5,17 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trading Journal Professional</title>
     
-    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <style>
         :root {
@@ -31,7 +23,7 @@
         body {
             background-color: var(--bg-dark);
             color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
             min-height: 100vh;
         }
 
@@ -88,31 +80,30 @@
 </head>
 <body>
 
-    <!-- AUTHENTICATION CONTAINER -->
+    <!-- AUTH CONTAINER -->
     <div id="authContainer">
         <div class="card p-4 shadow-lg" style="max-width: 400px; width: 100%;">
             <div class="text-center mb-4">
-                <i class="fas text-primary fa-chart-line fa-2x"></i>
+                <i class="fas fa-chart-line text-primary fa-2x"></i>
                 <h4 class="mt-2 fw-bold">Trading Journal</h4>
                 <p class="text-muted small">Catat & Analisa Performa Trading Anda</p>
             </div>
 
-            <!-- Pesan Notifikasi Alert -->
-            <div id="authAlert" class="alert alert-danger d-none small py-2" role="alert"></div>
+            <div id="authAlert" class="alert alert-danger d-none small py-2"></div>
 
             <form id="authForm" onsubmit="event.preventDefault();">
                 <div class="mb-3">
                     <label class="form-label small">Email</label>
-                    <input type="email" id="authEmail" class="form-control" placeholder="nama@email.com" required>
+                    <input type="email" id="authEmail" class="form-control" placeholder="nama@email.com">
                 </div>
                 <div class="mb-3">
                     <label class="form-label small">Password</label>
-                    <input type="password" id="authPassword" class="form-control" placeholder="••••••••" required>
+                    <input type="password" id="authPassword" class="form-control" placeholder="••••••••">
                 </div>
-                <button type="button" id="btnLogin" onclick="handleAuth('login')" class="btn btn-primary w-100 mb-2">
+                <button type="button" id="btnLogin" class="btn btn-primary w-100 mb-2">
                     <i class="fas fa-sign-in-alt me-1"></i> Masuk
                 </button>
-                <button type="button" id="btnRegister" onclick="handleAuth('register')" class="btn btn-outline-light w-100 mb-3">
+                <button type="button" id="btnRegister" class="btn btn-outline-light w-100 mb-3">
                     <i class="fas fa-user-plus me-1"></i> Buat Akun Baru
                 </button>
             </form>
@@ -122,7 +113,7 @@
                 <span class="position-absolute top-50 start-50 translate-middle px-2 bg-dark text-muted small">atau</span>
             </div>
 
-            <button onclick="loginAsGuest()" class="btn btn-outline-secondary w-100">
+            <button type="button" id="btnGuest" class="btn btn-outline-secondary w-100">
                 <i class="fas fa-user-clock me-1"></i> Masuk Mode Tamu (Lokal)
             </button>
         </div>
@@ -130,18 +121,17 @@
 
     <!-- MAIN APP CONTAINER -->
     <div id="appContainer" class="d-none">
-        <!-- HEADER / NAVBAR -->
         <nav class="navbar navbar-expand-lg border-bottom border-secondary px-3 py-2">
             <div class="container-fluid">
                 <span class="navbar-brand text-light fw-bold">
                     <i class="fas fa-chart-line me-2 text-primary"></i>Trading Journal
                 </span>
                 <div class="d-flex align-items-center gap-3">
-                    <span id="syncStatus" class="sync-badge bg-secondary text-white">
-                        <i class="fas fa-sync-alt fa-spin me-1"></i> Memuat...
+                    <span id="syncStatus" class="sync-badge bg-warning text-dark">
+                        <i class="fas fa-hdd me-1"></i> Penyimpanan Lokal
                     </span>
                     <span id="userDisplay" class="text-muted small"></span>
-                    <button onclick="handleLogout()" class="btn btn-sm btn-outline-danger">
+                    <button type="button" id="btnLogout" class="btn btn-sm btn-outline-danger">
                         <i class="fas fa-sign-out-alt"></i> Keluar
                     </button>
                 </div>
@@ -149,24 +139,23 @@
         </nav>
 
         <div class="container-fluid py-4">
-            <!-- RISK CALCULATOR & SUMMARY -->
             <div class="row g-3 mb-4">
-                <!-- RISK CALCULATOR CARD -->
+                <!-- RISK CALCULATOR -->
                 <div class="col-lg-4">
                     <div class="card h-100 p-3">
                         <h6 class="fw-bold mb-3"><i class="fas fa-calculator text-primary me-2"></i>Kalkulator Risk</h6>
                         <div class="row g-2">
                             <div class="col-6 mb-2">
                                 <label class="form-label small text-muted">Balance ($)</label>
-                                <input type="number" id="calcBalance" class="form-control form-control-sm" value="1000" oninput="calculateRisk()">
+                                <input type="number" id="calcBalance" class="form-control form-control-sm" value="1000">
                             </div>
                             <div class="col-6 mb-2">
                                 <label class="form-label small text-muted">Risk (%)</label>
-                                <input type="number" id="calcRiskPct" class="form-control form-control-sm" value="1" step="0.1" oninput="calculateRisk()">
+                                <input type="number" id="calcRiskPct" class="form-control form-control-sm" value="1" step="0.1">
                             </div>
                             <div class="col-6 mb-2">
                                 <label class="form-label small text-muted">Pair / Asset</label>
-                                <select id="calcPair" class="form-select form-select-sm" onchange="calculateRisk()">
+                                <select id="calcPair" class="form-select form-select-sm">
                                     <option value="EURUSD">EUR/USD</option>
                                     <option value="GBPUSD">GBP/USD</option>
                                     <option value="USDJPY">USD/JPY</option>
@@ -176,7 +165,7 @@
                             </div>
                             <div class="col-6 mb-2">
                                 <label class="form-label small text-muted">Stop Loss (Pips)</label>
-                                <input type="number" id="calcSLPips" class="form-control form-control-sm" value="20" oninput="calculateRisk()">
+                                <input type="number" id="calcSLPips" class="form-control form-control-sm" value="20">
                             </div>
                         </div>
 
@@ -191,13 +180,13 @@
                             </div>
                         </div>
 
-                        <button onclick="applyCalcToForm()" class="btn btn-sm btn-outline-primary mt-2 w-100">
+                        <button type="button" id="btnApplyCalc" class="btn btn-sm btn-outline-primary mt-2 w-100">
                             <i class="fas fa-copy me-1"></i> Salin ke Input Trade
                         </button>
                     </div>
                 </div>
 
-                <!-- STATS DASHBOARD -->
+                <!-- STATS -->
                 <div class="col-lg-8">
                     <div class="row g-2 h-100">
                         <div class="col-md-3 col-6">
@@ -228,8 +217,7 @@
                 </div>
             </div>
 
-            <!-- TAB NAVIGATION -->
-            <ul class="nav nav-tabs mb-3 border-secondary" id="mainTab" role="tablist">
+            <ul class="nav nav-tabs mb-3 border-secondary" id="mainTab">
                 <li class="nav-item">
                     <button class="nav-link active" id="trades-tab" data-bs-toggle="tab" data-bs-target="#trades-pane">
                         <i class="fas fa-list me-1"></i> Daftar Trade
@@ -243,11 +231,10 @@
             </ul>
 
             <div class="tab-content" id="mainTabContent">
-                <!-- TAB 1: LIST TRADES -->
                 <div class="tab-pane fade show active" id="trades-pane">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="m-0 fw-bold">Jurnal Transaksi</h5>
-                        <button class="btn btn-sm btn-primary" onclick="openTradeModal()">
+                        <button type="button" id="btnOpenModal" class="btn btn-sm btn-primary">
                             <i class="fas fa-plus me-1"></i> Tambah Trade Baru
                         </button>
                     </div>
@@ -268,15 +255,12 @@
                                         <th>Aksi</th>
                                     </tr>
                                 </thead>
-                                <tbody id="tradeTableBody">
-                                    <!-- Rendered dynamically -->
-                                </tbody>
+                                <tbody id="tradeTableBody"></tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- TAB 2: ANALYTICS -->
                 <div class="tab-pane fade" id="analytics-pane">
                     <div class="card p-3">
                         <h6 class="fw-bold mb-3">Kurva Ekuitas (Equity Curve)</h6>
@@ -289,12 +273,12 @@
         </div>
     </div>
 
-    <!-- MODAL ADD / EDIT TRADE -->
+    <!-- MODAL -->
     <div class="modal fade" id="tradeModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content card">
                 <div class="modal-header border-secondary">
-                    <h5 class="modal-title" id="tradeModalTitle">Tambah Trade</h5>
+                    <h5 class="modal-title">Tambah Trade</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -341,244 +325,183 @@
                 </div>
                 <div class="modal-footer border-secondary">
                     <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-sm btn-primary" onclick="saveTrade()">Simpan Trade</button>
+                    <button type="button" id="btnSaveTrade" class="btn btn-sm btn-primary">Simpan Trade</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // ==========================================
-        // CONFIGURATION FIREBASE
-        // (Ganti nilai di bawah dengan data dari Firebase Console jika ada)
-        // ==========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyAeWvYIS_-SRSc-AINGNa7hTDOGmraxU7o",
-            authDomain: "trading-journal-ecfcd.firebaseapp.com",
-            projectId: "trading-journal-ecfcd",
-            storageBucket: "trading-journal-ecfcd.firebasestorage.app",
-            messagingSenderId: "282320283613",
-            appId: "1:282320283613:web:058ed10592705d6d453834"
-			measurementId: "G-Q2GV8YF6ME"
-        };
-
-        let db = null;
-        let auth = null;
         let currentUser = null;
         let trades = [];
         let equityChartInstance = null;
+        let tradeModalInstance = null;
 
-        // Inisialisasi Firebase dengan proteksi error
-        try {
-            if (typeof firebase !== 'undefined' && firebaseConfig.apiKey && !firebaseConfig.apiKey.includes('DUMMY')) {
-                firebase.initializeApp(firebaseConfig);
-                auth = firebase.auth();
-                db = firebase.firestore();
-            }
-        } catch (e) {
-            console.warn("Firebase tidak diinisialisasi. Berjalan dalam mode penyimpanan lokal.");
-        }
+        document.addEventListener("DOMContentLoaded", () => {
+            tradeModalInstance = new bootstrap.Modal(document.getElementById('tradeModal'));
 
-        window.addEventListener('DOMContentLoaded', () => {
-            initAuthListener();
+            // EVENT LISTENERS TOMBOL
+            document.getElementById('btnLogin').addEventListener('click', () => processAuth('login'));
+            document.getElementById('btnRegister').addEventListener('click', () => processAuth('register'));
+            document.getElementById('btnGuest').addEventListener('click', () => processGuest());
+            document.getElementById('btnLogout').addEventListener('click', () => logout());
+            document.getElementById('btnOpenModal').addEventListener('click', () => openModal());
+            document.getElementById('btnSaveTrade').addEventListener('click', () => saveTrade());
+            document.getElementById('btnApplyCalc').addEventListener('click', () => applyCalc());
+
+            // KALKULATOR LISTENERS
+            ['calcBalance', 'calcRiskPct', 'calcSLPips', 'calcPair'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calculateRisk);
+            });
+
+            checkActiveUser();
             calculateRisk();
         });
 
+        function checkActiveUser() {
+            const saved = localStorage.getItem('tj_active_user');
+            if (saved) {
+                currentUser = JSON.parse(saved);
+                loadDashboard();
+            }
+        }
+
         function showAlert(msg) {
-            const alertEl = document.getElementById('authAlert');
-            alertEl.innerText = msg;
-            alertEl.classList.remove('d-none');
+            const el = document.getElementById('authAlert');
+            el.innerText = msg;
+            el.classList.remove('d-none');
         }
 
         function hideAlert() {
             document.getElementById('authAlert').classList.add('d-none');
         }
 
-        // AUTH LISTENER
-        function initAuthListener() {
-            const guestUser = localStorage.getItem('journal_active_user');
-            if (guestUser) {
-                currentUser = JSON.parse(guestUser);
-                setupDashboard(true);
-                return;
-            }
-
-            if (auth) {
-                auth.onAuthStateChanged(user => {
-                    if (user) {
-                        currentUser = user;
-                        setupDashboard(false);
-                    } else {
-                        showAuthContainer();
-                    }
-                });
-            } else {
-                showAuthContainer();
-            }
-        }
-
-        function showAuthContainer() {
-            document.getElementById('authContainer').classList.remove('d-none');
-            document.getElementById('appContainer').classList.add('d-none');
-        }
-
-        // HANDLE LOGIN & REGISTER
-        async function handleAuth(mode) {
+        function processAuth(type) {
             hideAlert();
             const email = document.getElementById('authEmail').value.trim();
             const password = document.getElementById('authPassword').value.trim();
 
             if (!email || !password) {
-                showAlert('Silakan isi email dan password terlebih dahulu.');
+                showAlert("Silakan masukkan email dan password.");
                 return;
             }
 
             if (password.length < 6) {
-                showAlert('Password minimal 6 karakter.');
+                showAlert("Password minimal 6 karakter.");
                 return;
             }
 
-            // Jika Firebase belum aktif/masih dummy -> buat akun lokal otomatis
-            if (!auth || firebaseConfig.apiKey.includes('DUMMY')) {
-                const localUser = {
-                    uid: 'user_' + btoa(email).replace(/=/g, ''),
-                    email: email
-                };
-                localStorage.setItem('journal_active_user', JSON.stringify(localUser));
-                currentUser = localUser;
-                setupDashboard(true);
-                return;
-            }
+            const userKey = 'tj_user_' + btoa(email).replace(/=/g, '');
+            const existingUser = localStorage.getItem(userKey);
 
-            const btn = mode === 'login' ? document.getElementById('btnLogin') : document.getElementById('btnRegister');
-            const originalText = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Memproses...';
-
-            try {
-                if (mode === 'login') {
-                    await auth.signInWithEmailAndPassword(email, password);
-                } else {
-                    await auth.createUserWithEmailAndPassword(email, password);
+            if (type === 'register') {
+                if (existingUser) {
+                    showAlert("Email sudah terdaftar. Silakan klik Masuk.");
+                    return;
                 }
-            } catch (err) {
-                console.error("Auth Error:", err);
-                let errorMessage = err.message;
-                if (err.code === 'auth/email-already-in-use') errorMessage = 'Email ini sudah terdaftar. Silakan klik Masuk.';
-                if (err.code === 'auth/wrong-password') errorMessage = 'Password salah.';
-                if (err.code === 'auth/user-not-found') errorMessage = 'Akun tidak ditemukan. Silakan Buat Akun Baru.';
-                if (err.code === 'auth/invalid-api-key') {
-                    errorMessage = 'Firebase API Key belum valid. Beralih ke penyimpanan lokal...';
-                    setTimeout(() => loginAsGuest(email), 1000);
+                const newUser = { email: email, pass: password, uid: userKey };
+                localStorage.setItem(userKey, JSON.stringify(newUser));
+                loginUser(newUser);
+            } else {
+                if (!existingUser) {
+                    showAlert("Akun tidak ditemukan. Silakan klik Buat Akun Baru.");
+                    return;
                 }
-                showAlert(errorMessage);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
+                const userObj = JSON.parse(existingUser);
+                if (userObj.pass !== password) {
+                    showAlert("Password salah.");
+                    return;
+                }
+                loginUser(userObj);
             }
         }
 
-        function loginAsGuest(customEmail) {
-            const email = customEmail || 'Tamu (Lokal)';
-            const guestObj = { uid: 'guest_' + Date.now(), email: email };
-            localStorage.setItem('journal_active_user', JSON.stringify(guestObj));
-            currentUser = guestObj;
-            setupDashboard(true);
+        function processGuest() {
+            const guestUser = { email: 'Tamu (Sesi Lokal)', uid: 'guest_' + Date.now() };
+            loginUser(guestUser);
         }
 
-        function handleLogout() {
-            localStorage.removeItem('journal_active_user');
-            if (auth) auth.signOut();
-            location.reload();
+        function loginUser(userObj) {
+            currentUser = userObj;
+            localStorage.setItem('tj_active_user', JSON.stringify(userObj));
+            loadDashboard();
         }
 
-        // DASHBOARD SETUP
-        async function setupDashboard(isLocal) {
+        function logout() {
+            localStorage.removeItem('tj_active_user');
+            currentUser = null;
+            document.getElementById('authContainer').classList.remove('d-none');
+            document.getElementById('appContainer').classList.add('d-none');
+        }
+
+        function loadDashboard() {
             document.getElementById('authContainer').classList.add('d-none');
             document.getElementById('appContainer').classList.remove('d-none');
             document.getElementById('userDisplay').innerText = currentUser.email;
 
-            const syncStatus = document.getElementById('syncStatus');
+            const storedTrades = localStorage.getItem('tj_trades_' + currentUser.uid);
+            trades = storedTrades ? JSON.parse(storedTrades) : [];
 
-            if (isLocal || !db) {
-                syncStatus.className = 'sync-badge bg-warning text-dark';
-                syncStatus.innerHTML = '<i class="fas fa-hdd me-1"></i> Penyimpanan Lokal';
-                loadLocalTrades();
-            } else {
-                syncStatus.className = 'sync-badge bg-success text-white';
-                syncStatus.innerHTML = '<i class="fas fa-cloud me-1"></i> Terhubung Cloud';
-                await loadCloudTrades();
-            }
-
-            renderDashboard();
+            renderAll();
         }
 
-        // DATA STORAGE
-        function loadLocalTrades() {
-            const stored = localStorage.getItem('trades_' + currentUser.uid);
-            trades = stored ? JSON.parse(stored) : [];
-        }
-
-        function saveLocalTrades() {
-            localStorage.setItem('trades_' + currentUser.uid, JSON.stringify(trades));
-        }
-
-        async function loadCloudTrades() {
-            try {
-                const snapshot = await db.collection('users').doc(currentUser.uid).collection('trades').get();
-                trades = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            } catch (err) {
-                console.error("Gagal muat cloud, beralih ke lokal:", err);
-                loadLocalTrades();
-            }
-        }
-
-        async function saveTradeToStorage(trade) {
-            const isLocalUser = currentUser.uid.startsWith('guest_') || currentUser.uid.startsWith('user_') || !db;
-            if (isLocalUser) {
-                const idx = trades.findIndex(t => t.id === trade.id);
-                if (idx >= 0) trades[idx] = trade;
-                else trades.push(trade);
-                saveLocalTrades();
-            } else {
-                try {
-                    const docRef = db.collection('users').doc(currentUser.uid).collection('trades').doc(trade.id);
-                    await docRef.set(trade);
-                    const idx = trades.findIndex(t => t.id === trade.id);
-                    if (idx >= 0) trades[idx] = trade;
-                    else trades.push(trade);
-                } catch (e) {
-                    console.error("Error save cloud:", e);
-                    saveLocalTrades();
-                }
-            }
-            renderDashboard();
-        }
-
-        // RISK CALCULATOR
         function calculateRisk() {
-            const balance = parseFloat(document.getElementById('calcBalance').value) || 0;
-            const riskPct = parseFloat(document.getElementById('calcRiskPct').value) || 0;
-            const slPips = parseFloat(document.getElementById('calcSLPips').value) || 1;
+            const bal = parseFloat(document.getElementById('calcBalance').value) || 0;
+            const pct = parseFloat(document.getElementById('calcRiskPct').value) || 0;
+            const pips = parseFloat(document.getElementById('calcSLPips').value) || 1;
 
-            const riskAmount = balance * (riskPct / 100);
-            const lotSize = (riskAmount / (slPips * 10)).toFixed(2);
+            const riskUSD = bal * (pct / 100);
+            const lot = (riskUSD / (pips * 10)).toFixed(2);
 
-            document.getElementById('resRiskAmount').innerText = '$' + riskAmount.toFixed(2);
-            document.getElementById('resLotSize').innerText = lotSize + ' Lot';
+            document.getElementById('resRiskAmount').innerText = '$' + riskUSD.toFixed(2);
+            document.getElementById('resLotSize').innerText = lot + ' Lot';
         }
 
-        function applyCalcToForm() {
+        function applyCalc() {
             document.getElementById('tradeSymbol').value = document.getElementById('calcPair').value;
             document.getElementById('tradeSize').value = parseFloat(document.getElementById('resLotSize').innerText);
-            openTradeModal();
+            openModal();
         }
 
-        // RENDERING
-        function renderDashboard() {
+        function openModal() {
+            document.getElementById('tradeForm').reset();
+            document.getElementById('tradeId').value = 'trd_' + Date.now();
+            document.getElementById('tradeDate').value = new Date().toISOString().slice(0, 16);
+            tradeModalInstance.show();
+        }
+
+        function saveTrade() {
+            const trade = {
+                id: document.getElementById('tradeId').value,
+                date: document.getElementById('tradeDate').value,
+                symbol: document.getElementById('tradeSymbol').value.toUpperCase(),
+                direction: document.getElementById('tradeDirection').value,
+                size: parseFloat(document.getElementById('tradeSize').value) || 0.1,
+                entry: parseFloat(document.getElementById('tradeEntry').value) || null,
+                exit: parseFloat(document.getElementById('tradeExit').value) || null,
+                pnl: parseFloat(document.getElementById('tradePnL').value) || 0,
+                strategy: document.getElementById('tradeStrategy').value
+            };
+
+            const idx = trades.findIndex(t => t.id === trade.id);
+            if (idx >= 0) trades[idx] = trade;
+            else trades.push(trade);
+
+            localStorage.setItem('tj_trades_' + currentUser.uid, JSON.stringify(trades));
+            tradeModalInstance.hide();
+            renderAll();
+        }
+
+        function deleteTrade(id) {
+            if (!confirm('Hapus transaksi ini?')) return;
+            trades = trades.filter(t => t.id !== id);
+            localStorage.setItem('tj_trades_' + currentUser.uid, JSON.stringify(trades));
+            renderAll();
+        }
+
+        function renderAll() {
             renderTable();
             renderStats();
             renderChart();
@@ -618,12 +541,12 @@
         }
 
         function renderStats() {
-            const totalTrades = trades.length;
+            const total = trades.length;
             const totalPnL = trades.reduce((acc, t) => acc + parseFloat(t.pnl || 0), 0);
             const wins = trades.filter(t => parseFloat(t.pnl) > 0);
             const losses = trades.filter(t => parseFloat(t.pnl) < 0);
 
-            const winRate = totalTrades ? ((wins.length / totalTrades) * 100).toFixed(1) : 0;
+            const winRate = total ? ((wins.length / total) * 100).toFixed(1) : 0;
             const grossProfit = wins.reduce((acc, t) => acc + parseFloat(t.pnl), 0);
             const grossLoss = Math.abs(losses.reduce((acc, t) => acc + parseFloat(t.pnl), 0));
             const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : grossProfit.toFixed(2);
@@ -631,7 +554,7 @@
             document.getElementById('statTotalPnL').innerText = '$' + totalPnL.toFixed(2);
             document.getElementById('statTotalPnL').className = 'fw-bold my-1 ' + (totalPnL >= 0 ? 'text-win' : 'text-loss');
             document.getElementById('statWinRate').innerText = winRate + '%';
-            document.getElementById('statTotalTrades').innerText = totalTrades;
+            document.getElementById('statTotalTrades').innerText = total;
             document.getElementById('statProfitFactor').innerText = profitFactor;
         }
 
@@ -639,14 +562,14 @@
             const ctx = document.getElementById('equityChart').getContext('2d');
             const sorted = [...trades].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            let currentEquity = 1000;
+            let equity = 1000;
             const labels = ['Start'];
             const data = [1000];
 
             sorted.forEach(t => {
-                currentEquity += parseFloat(t.pnl || 0);
+                equity += parseFloat(t.pnl || 0);
                 labels.push(t.date.split('T')[0]);
-                data.push(currentEquity);
+                data.push(equity);
             });
 
             if (equityChartInstance) equityChartInstance.destroy();
@@ -674,47 +597,6 @@
                     }
                 }
             });
-        }
-
-        // MODAL ACTIONS
-        function openTradeModal() {
-            document.getElementById('tradeForm').reset();
-            document.getElementById('tradeId').value = 'trd_' + Date.now();
-            document.getElementById('tradeDate').value = new Date().toISOString().slice(0, 16);
-            new bootstrap.Modal(document.getElementById('tradeModal')).show();
-        }
-
-        async function saveTrade() {
-            const trade = {
-                id: document.getElementById('tradeId').value,
-                date: document.getElementById('tradeDate').value,
-                symbol: document.getElementById('tradeSymbol').value.toUpperCase(),
-                direction: document.getElementById('tradeDirection').value,
-                size: parseFloat(document.getElementById('tradeSize').value),
-                entry: parseFloat(document.getElementById('tradeEntry').value) || null,
-                exit: parseFloat(document.getElementById('tradeExit').value) || null,
-                pnl: parseFloat(document.getElementById('tradePnL').value) || 0,
-                strategy: document.getElementById('tradeStrategy').value
-            };
-
-            await saveTradeToStorage(trade);
-            bootstrap.Modal.getInstance(document.getElementById('tradeModal')).hide();
-        }
-
-        async function deleteTrade(id) {
-            if (!confirm('Hapus transaksi ini?')) return;
-
-            const isLocalUser = currentUser.uid.startsWith('guest_') || currentUser.uid.startsWith('user_') || !db;
-            if (isLocalUser) {
-                trades = trades.filter(t => t.id !== id);
-                saveLocalTrades();
-            } else {
-                try {
-                    await db.collection('users').doc(currentUser.uid).collection('trades').doc(id).delete();
-                } catch (e) { console.error(e); }
-                trades = trades.filter(t => t.id !== id);
-            }
-            renderDashboard();
         }
     </script>
 </body>
