@@ -52,9 +52,13 @@
                 <button class="btn btn-outline-light btn-sm me-3" id="btnThemeToggle" onclick="toggleTheme()" title="Ubah Tema">
                     <i class="fa-solid fa-moon" id="themeIcon"></i>
                 </button>
-                <span id="userStatus" class="navbar-text me-3 text-light d-none">
-                    <i class="fa-solid fa-circle-user me-1"></i> <span id="userEmail"></span>
-                </span>
+                <div id="userStatus" class="d-flex align-items-center gap-2 me-3 d-none">
+                    <img id="navProfilePhoto" src="https://via.placeholder.com/32" class="rounded-circle border" width="32" height="32" style="object-fit: cover;">
+                    <span id="userEmail" class="navbar-text text-light p-0 fw-bold"></span>
+                    <button class="btn btn-sm btn-outline-light ms-1" onclick="openProfileModal()" title="Edit Profil">
+                        <i class="fa-solid fa-user-pen"></i>
+                    </button>
+                </div>
                 <button id="btnLogout" class="btn btn-outline-danger btn-sm d-none" onclick="logoutUser()">
                     <i class="fa-solid fa-right-from-bracket me-1"></i>Keluar
                 </button>
@@ -62,41 +66,41 @@
         </div>
     </nav>
 
-<!-- SECTION 1: AUTHENTICATION -->
-<div id="authSection" class="container">
-    <div class="card auth-card">
-        <div class="card-header text-center py-3">
-            <h5 class="mb-0" id="authTitle">Masuk ke Jurnal Trading</h5>
-        </div>
-        <div class="card-body p-4">
-            <div id="authAlert" class="alert alert-danger d-none" role="alert"></div>
-            <form id="authForm" onsubmit="handleAuth(event)">
-                <div class="mb-3">
-                    <label for="username" class="form-label">Username</label>
-                    <div class="input-group">
-                        <span class="input-group-text">@</span>
-                        <input type="text" class="form-control" id="username" placeholder="Masukkan username" required pattern="[a-zA-Z0-9_]+" title="Hanya huruf, angka, dan underscore">
+    <!-- SECTION 1: AUTHENTICATION -->
+    <div id="authSection" class="container">
+        <div class="card auth-card">
+            <div class="card-header text-center py-3">
+                <h5 class="mb-0" id="authTitle">Masuk ke Jurnal Trading</h5>
+            </div>
+            <div class="card-body p-4">
+                <div id="authAlert" class="alert alert-danger d-none" role="alert"></div>
+                <form id="authForm" onsubmit="handleAuth(event)">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text">@</span>
+                            <input type="text" class="form-control" id="username" placeholder="Masukkan username" required pattern="[a-zA-Z0-9_]+" title="Hanya huruf, angka, dan underscore">
+                        </div>
+                        <small class="text-muted">Hanya huruf, angka, atau garis bawah (_)</small>
                     </div>
-                    <small class="text-muted">Hanya huruf, angka, atau garis bawah (_)</small>
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Kata Sandi</label>
-                    <input type="password" class="form-control" id="password" placeholder="Minimal 6 karakter" required minlength="6">
-                </div>
-                <button type="submit" id="btnSubmitAuth" class="btn btn-primary w-100 mb-2">
-                    <i class="fa-solid fa-right-to-bracket me-1"></i>Masuk
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Kata Sandi</label>
+                        <input type="password" class="form-control" id="password" placeholder="Minimal 6 karakter" required minlength="6">
+                    </div>
+                    <button type="submit" id="btnSubmitAuth" class="btn btn-primary w-100 mb-2">
+                        <i class="fa-solid fa-right-to-bracket me-1"></i>Masuk
+                    </button>
+                </form>
+                <div class="divider"><span>atau</span></div>
+                <button class="btn btn-outline-secondary w-100 mb-3" onclick="handleGuestLogin()">
+                    <i class="fa-solid fa-user-secret me-1"></i>Masuk sebagai Guest (Tamu)
                 </button>
-            </form>
-            <div class="divider"><span>atau</span></div>
-            <button class="btn btn-outline-secondary w-100 mb-3" onclick="handleGuestLogin()">
-                <i class="fa-solid fa-user-secret me-1"></i>Masuk sebagai Guest (Tamu)
-            </button>
-            <div class="text-center">
-                <small id="authToggleText">Belum punya akun? <a href="#" onclick="toggleAuthMode(true)">Daftar sekarang</a></small>
+                <div class="text-center">
+                    <small id="authToggleText">Belum punya akun? <a href="#" onclick="toggleAuthMode(true)">Daftar sekarang</a></small>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
     <!-- SECTION 2: DASHBOARD TRADING -->
     <div id="dashboardSection" class="container mt-4 d-none">
@@ -416,6 +420,38 @@
         </div>
     </div>
 
+    <!-- MODAL EDIT PROFIL -->
+    <div class="modal fade" id="profileModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fa-solid fa-user-gear me-2"></i>Pengaturan Profil</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="profileAlert" class="alert alert-danger d-none" role="alert"></div>
+                    <form id="profileForm" onsubmit="handleUpdateProfile(event)">
+                        <div class="text-center mb-4">
+                            <img id="profilePreview" src="https://via.placeholder.com/100" class="rounded-circle border" width="100" height="100" style="object-fit: cover;">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editDisplayName" class="form-label">Nama Tampilan</label>
+                            <input type="text" class="form-control" id="editDisplayName" placeholder="Masukkan nama tampilan" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editPhotoUrl" class="form-label">URL Foto Profil</label>
+                            <input type="url" class="form-control" id="editPhotoUrl" placeholder="https://example.com/foto.jpg" oninput="updateProfilePreview(this.value)">
+                            <small class="text-muted">Masukkan tautan/URL gambar untuk foto profil kamu.</small>
+                        </div>
+                        <button type="submit" id="btnSaveProfile" class="btn btn-primary w-100">
+                            <i class="fa-solid fa-floppy-disk me-1"></i>Simpan Perubahan
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL PREVIEW GAMBAR BEFORE/AFTER -->
     <div class="modal fade" id="modalImagePreview" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -556,7 +592,7 @@
             if (fileInput.files && fileInput.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    urlInput.value = e.target.result; // Simpan Base64 ke input URL
+                    urlInput.value = e.target.result;
                     imgPreview.src = e.target.result;
                     container.classList.remove('d-none');
                 };
@@ -575,109 +611,82 @@
         }
 
         window.toggleAuthMode = function(signUp) {
-        isSignUpMode = signUp;
-        hideErrorAlert();
-    
-        const title = document.getElementById('authTitle');
-        const btnSubmit = document.getElementById('btnSubmitAuth');
-        const toggleText = document.getElementById('authToggleText');
+            isSignUpMode = signUp;
+            hideErrorAlert();
+        
+            const title = document.getElementById('authTitle');
+            const btnSubmit = document.getElementById('btnSubmitAuth');
+            const toggleText = document.getElementById('authToggleText');
 
-    if (isSignUpMode) {
-        title.innerText = "Daftar Akun Baru";
-        btnSubmit.innerText = "Daftar";
-        toggleText.innerHTML = 'Sudah punya akun? <a href="#" onclick="toggleAuthMode(false)">Masuk di sini</a>';
-    } else {
-        title.innerText = "Masuk ke Jurnal Trading";
-        btnSubmit.innerText = "Masuk";
-        toggleText.innerHTML = 'Belum punya akun? <a href="#" onclick="toggleAuthMode(true)">Daftar sekarang</a>';
-    }
-};
-function usernameToEmail(username) {
-    return `${username.toLowerCase().trim()}@journal.internal`;
-}
+            if (isSignUpMode) {
+                title.innerText = "Daftar Akun Baru";
+                btnSubmit.innerText = "Daftar";
+                toggleText.innerHTML = 'Sudah punya akun? <a href="#" onclick="toggleAuthMode(false)">Masuk di sini</a>';
+            } else {
+                title.innerText = "Masuk ke Jurnal Trading";
+                btnSubmit.innerText = "Masuk";
+                toggleText.innerHTML = 'Belum punya akun? <a href="#" onclick="toggleAuthMode(true)">Daftar sekarang</a>';
+            }
+        };
 
-window.handleAuth = async function(e) {
-    e.preventDefault();
-    hideErrorAlert();
-    
-    const rawUsername = document.getElementById('username').value.trim().toLowerCase();
-    const password = document.getElementById('password').value;
-    
-    // Validasi format username (tanpa spasi / karakter khusus)
-    const usernameRegex = /^[a-zA-Z0-9_]+$/;
-    if (!usernameRegex.test(rawUsername)) {
-        showErrorAlert("Username hanya boleh berisi huruf, angka, dan underscore (_).");
-        return;
-    }
+        function usernameToEmail(username) {
+            return `${username.toLowerCase().trim()}@journal.internal`;
+        }
 
-    const virtualEmail = usernameToEmail(rawUsername);
-
-    try {
-        if (isSignUpMode) {
-            // 1. Cek apakah Username sudah pernah terdaftar di Firestore
-            const usernameDocRef = doc(db, "usernames", rawUsername);
-            const usernameSnap = await getDoc(usernameDocRef);
-
-            if (usernameSnap.exists()) {
-                showErrorAlert("Username ini sudah digunakan. Silakan pilih username lain!");
+        window.handleAuth = async function(e) {
+            e.preventDefault();
+            hideErrorAlert();
+            
+            const rawUsername = document.getElementById('username').value.trim().toLowerCase();
+            const password = document.getElementById('password').value;
+            
+            const usernameRegex = /^[a-zA-Z0-9_]+$/;
+            if (!usernameRegex.test(rawUsername)) {
+                showErrorAlert("Username hanya boleh berisi huruf, angka, dan underscore (_).");
                 return;
             }
 
-            // 2. Buat Akun Firebase Auth
-            const userCredential = await createUserWithEmailAndPassword(auth, virtualEmail, password);
-            const user = userCredential.user;
+            const virtualEmail = usernameToEmail(rawUsername);
 
-            // 3. Simpan display name & Peta Username di Firestore
-            await updateProfile(user, { displayName: rawUsername });
-            
-            // Simpan indeks username unik
-            await setDoc(doc(db, "usernames", rawUsername), {
-                uid: user.uid,
-                createdAt: serverTimestamp()
-            });
+            try {
+                if (isSignUpMode) {
+                    const usernameDocRef = doc(db, "usernames", rawUsername);
+                    const usernameSnap = await getDoc(usernameDocRef);
 
-            // Simpan profil user awal
-            await setDoc(doc(db, "users", user.uid), {
-                username: rawUsername,
-                createdAt: serverTimestamp()
-            }, { merge: true });
+                    if (usernameSnap.exists()) {
+                        showErrorAlert("Username ini sudah digunakan. Silakan pilih username lain!");
+                        return;
+                    }
 
-        } else {
-            // Login menggunakan Email Virtual dari Username
-            await signInWithEmailAndPassword(auth, virtualEmail, password);
-        }
-    } catch (err) { 
-        if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-            showErrorAlert("Username atau Password salah!");
-        } else if (err.code === 'auth/email-already-in-use') {
-            showErrorAlert("Username ini sudah digunakan.");
-        } else {
-            showErrorAlert(err.message);
-        }
-    }
-};
+                    const userCredential = await createUserWithEmailAndPassword(auth, virtualEmail, password);
+                    const user = userCredential.user;
 
-// Update Tampilan Header saat Auth State berubah
-onAuthStateChanged(auth, async (user) => {
-    currentUser = user;
-    if (user) {
-        document.getElementById('authSection').classList.add('d-none');
-        document.getElementById('dashboardSection').classList.remove('d-none');
-        document.getElementById('userStatus').classList.remove('d-none');
-        document.getElementById('btnLogout').classList.remove('d-none');
-        
-        // Tampilkan username (displayName) di navbar
-        const displayName = user.displayName || (user.email ? user.email.split('@')[0] : "Guest");
-        document.getElementById('userEmail').innerText = `@${displayName}`;
+                    await updateProfile(user, { displayName: rawUsername });
+                    
+                    await setDoc(doc(db, "usernames", rawUsername), {
+                        uid: user.uid,
+                        createdAt: serverTimestamp()
+                    });
 
-        await loadUserJournals();
-    } else {
-        document.getElementById('authSection').classList.remove('d-none');
-        document.getElementById('dashboardSection').classList.add('d-none');
-        document.getElementById('userStatus').classList.add('d-none');
-        document.getElementById('btnLogout').classList.add('d-none');
-    }
-});
+                    await setDoc(doc(db, "users", user.uid), {
+                        username: rawUsername,
+                        displayName: rawUsername,
+                        createdAt: serverTimestamp()
+                    }, { merge: true });
+
+                } else {
+                    await signInWithEmailAndPassword(auth, virtualEmail, password);
+                }
+            } catch (err) { 
+                if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+                    showErrorAlert("Username atau Password salah!");
+                } else if (err.code === 'auth/email-already-in-use') {
+                    showErrorAlert("Username ini sudah digunakan.");
+                } else {
+                    showErrorAlert(err.message);
+                }
+            }
+        };
 
         window.handleGuestLogin = async function() {
             hideErrorAlert();
@@ -686,6 +695,87 @@ onAuthStateChanged(auth, async (user) => {
 
         window.logoutUser = function() { signOut(auth); };
 
+        /* HELPER UPDATE USER UI AT NAVBAR */
+        function updateUserUI(user) {
+            const nameDisplay = document.getElementById('userEmail');
+            const photoDisplay = document.getElementById('navProfilePhoto');
+            const defaultAvatar = "https://via.placeholder.com/32";
+
+            if (user) {
+                if (user.isAnonymous) {
+                    nameDisplay.innerText = "Guest / Tamu";
+                    photoDisplay.src = defaultAvatar;
+                } else {
+                    const displayName = user.displayName || (user.email ? user.email.split('@')[0] : "User");
+                    nameDisplay.innerText = `@${displayName}`;
+                    photoDisplay.src = user.photoURL || defaultAvatar;
+                }
+            }
+        }
+
+        /* MANAJEMEN PROFIL USER */
+        window.openProfileModal = function() {
+            if (!currentUser) return;
+            
+            const displayNameInput = document.getElementById('editDisplayName');
+            const photoUrlInput = document.getElementById('editPhotoUrl');
+            const previewImg = document.getElementById('profilePreview');
+            const defaultAvatar = "https://via.placeholder.com/100";
+
+            displayNameInput.value = currentUser.displayName || "";
+            photoUrlInput.value = currentUser.photoURL || "";
+            previewImg.src = currentUser.photoURL || defaultAvatar;
+
+            document.getElementById('profileAlert').classList.add('d-none');
+            const modal = new bootstrap.Modal(document.getElementById('profileModal'));
+            modal.show();
+        };
+
+        window.updateProfilePreview = function(url) {
+            const previewImg = document.getElementById('profilePreview');
+            previewImg.src = url.trim() !== "" ? url : "https://via.placeholder.com/100";
+        };
+
+        window.handleUpdateProfile = async function(e) {
+            e.preventDefault();
+            if (!currentUser) return;
+
+            const newDisplayName = document.getElementById('editDisplayName').value.trim();
+            const newPhotoUrl = document.getElementById('editPhotoUrl').value.trim();
+            const btnSave = document.getElementById('btnSaveProfile');
+            const alertBox = document.getElementById('profileAlert');
+
+            btnSave.disabled = true;
+            btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Menyimpan...';
+
+            try {
+                await updateProfile(currentUser, {
+                    displayName: newDisplayName,
+                    photoURL: newPhotoUrl || null
+                });
+
+                await setDoc(doc(db, "users", currentUser.uid), {
+                    displayName: newDisplayName,
+                    photoURL: newPhotoUrl || null,
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+
+                updateUserUI(currentUser);
+
+                const modalEl = document.getElementById('profileModal');
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) modalInstance.hide();
+
+            } catch (err) {
+                alertBox.innerText = "Gagal memperbarui profil: " + err.message;
+                alertBox.classList.remove('d-none');
+            } finally {
+                btnSave.disabled = false;
+                btnSave.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Perubahan';
+            }
+        };
+
+        // Update Tampilan Header saat Auth State berubah
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
             if (user) {
@@ -693,7 +783,8 @@ onAuthStateChanged(auth, async (user) => {
                 document.getElementById('dashboardSection').classList.remove('d-none');
                 document.getElementById('userStatus').classList.remove('d-none');
                 document.getElementById('btnLogout').classList.remove('d-none');
-                document.getElementById('userEmail').innerText = user.isAnonymous ? "Guest / Tamu" : user.email;
+                
+                updateUserUI(user);
 
                 await loadUserJournals();
             } else {
