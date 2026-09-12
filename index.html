@@ -702,22 +702,34 @@
         window.logoutUser = function() { signOut(auth); };
 
         /* HELPER UPDATE USER UI AT NAVBAR */
-        function updateUserUI(user) {
-            const nameDisplay = document.getElementById('userEmail');
-            const photoDisplay = document.getElementById('navProfilePhoto');
-            const defaultAvatar = "https://via.placeholder.com/32";
+        async function updateUserUI(user) {
+    const nameDisplay = document.getElementById('userEmail');
+    const photoDisplay = document.getElementById('navProfilePhoto');
+    const defaultAvatar = "https://via.placeholder.com/32";
 
-            if (user) {
-                if (user.isAnonymous) {
-                    nameDisplay.innerText = "Guest / Tamu";
-                    photoDisplay.src = defaultAvatar;
-                } else {
-                    const displayName = user.displayName || (user.email ? user.email.split('@')[0] : "User");
-                    nameDisplay.innerText = `@${displayName}`;
-                    photoDisplay.src = user.photoURL || defaultAvatar;
+    if (user) {
+        if (user.isAnonymous) {
+            nameDisplay.innerText = "Guest / Tamu";
+            photoDisplay.src = defaultAvatar;
+        } else {
+            const displayName = user.displayName || (user.email ? user.email.split('@')[0] : "User");
+            nameDisplay.innerText = `@${displayName}`;
+            
+            // Prioritaskan mengambil Foto Profil Base64 dari Firestore jika ada
+            try {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists() && userDoc.data().photoURL) {
+                    photoDisplay.src = userDoc.data().photoURL;
+                    return;
                 }
+            } catch (err) {
+                console.log("Gagal memuat foto dari Firestore:", err);
             }
+
+            photoDisplay.src = user.photoURL || defaultAvatar;
         }
+    }
+}
 
         /* MANAJEMEN PROFIL USER */
         window.openProfileModal = function() {
@@ -745,44 +757,51 @@
         };
 
         window.handleUpdateProfile = async function(e) {
-            e.preventDefault();
-            if (!currentUser) return;
+    e.preventDefault();
+    if (!currentUser) return;
 
-            const newDisplayName = document.getElementById('editDisplayName').value.trim();
-            const newPhotoUrl = document.getElementById('editPhotoUrl').value.trim();
-            const btnSave = document.getElementById('btnSaveProfile');
-            const alertBox = document.getElementById('profileAlert');
+    const newDisplayName = document.getElementById('editDisplayName').value.trim();
+    const newPhotoUrl = document.getElementById('editPhotoUrl').value.trim();
+    const btnSave = document.getElementById('btnSaveProfile');
+    const alertBox = document.getElementById('profileAlert');
 
-            btnSave.disabled = true;
-            btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Menyimpan...';
+    btnSave.disabled = true;
+    btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i>Menyimpan...';
+    alertBox.classList.add('d-none');
 
-            try {
-                await updateProfile(currentUser, {
-                    displayName: newDisplayName,
-                    photoURL: newPhotoUrl || null
-                });
+    try {
+        // 1. Simpan Foto Lengkap (Base64/URL) ke Firestore terlebih dahulu
+        await setDoc(doc(db, "users", currentUser.uid), {
+            displayName: newDisplayName,
+            photoURL: newPhotoUrl || null,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
 
-                await setDoc(doc(db, "users", currentUser.uid), {
-                    displayName: newDisplayName,
-                    photoURL: newPhotoUrl || null,
-                    updatedAt: serverTimestamp()
-                }, { merge: true });
+        // 2. Untuk Firebase Auth, hanya masukkan URL biasa (bukan Base64 panjang) agar tidak kena limit karakter
+        const isBase64 = newPhotoUrl.startsWith('data:image/');
+        const authPhotoUrl = isBase64 ? null : (newPhotoUrl || null);
 
-                updateUserUI(currentUser);
+        await updateProfile(currentUser, {
+            displayName: newDisplayName,
+            photoURL: authPhotoUrl
+        });
 
-                const modalEl = document.getElementById('profileModal');
-                const modalInstance = bootstrap.Modal.getInstance(modalEl);
-                if (modalInstance) modalInstance.hide();
+        // 3. Perbarui tampilan UI
+        await updateUserUI(currentUser);
 
-            } catch (err) {
-                alertBox.innerText = "Gagal memperbarui profil: " + err.message;
-                alertBox.classList.remove('d-none');
-            } finally {
-                btnSave.disabled = false;
-                btnSave.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Perubahan';
-            }
-        };
+        // Close Modal
+        const modalEl = document.getElementById('profileModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) modalInstance.hide();
 
+    } catch (err) {
+        alertBox.innerText = "Gagal memperbarui profil: " + err.message;
+        alertBox.classList.remove('d-none');
+    } finally {
+        btnSave.disabled = false;
+        btnSave.innerHTML = '<i class="fa-solid fa-floppy-disk me-1"></i>Simpan Perubahan';
+    }
+};
         // Update Tampilan Header saat Auth State berubah
         onAuthStateChanged(auth, async (user) => {
             currentUser = user;
