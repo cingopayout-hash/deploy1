@@ -438,11 +438,15 @@
                             <label for="editDisplayName" class="form-label">Nama Tampilan</label>
                             <input type="text" class="form-control" id="editDisplayName" placeholder="Masukkan nama tampilan" required>
                         </div>
-                        <div class="mb-3">
-                            <label for="editPhotoUrl" class="form-label">URL Foto Profil</label>
-                            <input type="url" class="form-control" id="editPhotoUrl" placeholder="https://example.com/foto.jpg" oninput="updateProfilePreview(this.value)">
-                            <small class="text-muted">Masukkan tautan/URL gambar untuk foto profil kamu.</small>
+                        
+                        <!-- UPLOAD FOTO PROFIL (FILE / URL) -->
+                        <div class="mb-3 border p-2 rounded bg-body-tertiary">
+                            <label class="form-label fw-bold mb-1"><i class="fa-solid fa-camera text-primary me-1"></i>Foto Profil</label>
+                            <input type="file" id="editProfileFile" class="form-control form-control-sm mb-2" accept="image/*" onchange="previewFile('editProfileFile', 'editPhotoUrl', 'profilePreview')">
+                            <input type="url" class="form-control form-control-sm" id="editPhotoUrl" placeholder="Atau paste URL foto di sini..." oninput="updateProfilePreview(this.value)">
+                            <small class="text-muted">Pilih file gambar dari galeri/komputer atau masukkan URL gambar.</small>
                         </div>
+
                         <button type="submit" id="btnSaveProfile" class="btn btn-primary w-100">
                             <i class="fa-solid fa-floppy-disk me-1"></i>Simpan Perubahan
                         </button>
@@ -587,14 +591,16 @@
             const fileInput = document.getElementById(fileInputId);
             const urlInput = document.getElementById(urlInputId);
             const imgPreview = document.getElementById(imgPreviewId);
-            const container = imgPreview.parentElement;
+            const container = imgPreview ? imgPreview.parentElement : null;
 
             if (fileInput.files && fileInput.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     urlInput.value = e.target.result;
                     imgPreview.src = e.target.result;
-                    container.classList.remove('d-none');
+                    if (container && container.classList.contains('d-none')) {
+                        container.classList.remove('d-none');
+                    }
                 };
                 reader.readAsDataURL(fileInput.files[0]);
             }
@@ -719,11 +725,13 @@
             
             const displayNameInput = document.getElementById('editDisplayName');
             const photoUrlInput = document.getElementById('editPhotoUrl');
+            const profileFileInput = document.getElementById('editProfileFile');
             const previewImg = document.getElementById('profilePreview');
             const defaultAvatar = "https://via.placeholder.com/100";
 
             displayNameInput.value = currentUser.displayName || "";
             photoUrlInput.value = currentUser.photoURL || "";
+            if (profileFileInput) profileFileInput.value = "";
             previewImg.src = currentUser.photoURL || defaultAvatar;
 
             document.getElementById('profileAlert').classList.add('d-none');
