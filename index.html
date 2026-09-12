@@ -575,11 +575,23 @@
         }
 
         window.toggleAuthMode = function(signUp) {
-            isSignUpMode = signUp;
-            hideErrorAlert();
-            document.getElementById('authTitle').innerText = isSignUpMode ? "Daftar Akun Baru" : "Masuk ke Jurnal Trading";
-            document.getElementById('btnSubmitAuth').innerText = isSignUpMode ? "Daftar" : "Masuk";
-        };
+        isSignUpMode = signUp;
+        hideErrorAlert();
+    
+        const title = document.getElementById('authTitle');
+        const btnSubmit = document.getElementById('btnSubmitAuth');
+        const toggleText = document.getElementById('authToggleText');
+
+    if (isSignUpMode) {
+        title.innerText = "Daftar Akun Baru";
+        btnSubmit.innerText = "Daftar";
+        toggleText.innerHTML = 'Sudah punya akun? <a href="#" onclick="toggleAuthMode(false)">Masuk di sini</a>';
+    } else {
+        title.innerText = "Masuk ke Jurnal Trading";
+        btnSubmit.innerText = "Masuk";
+        toggleText.innerHTML = 'Belum punya akun? <a href="#" onclick="toggleAuthMode(true)">Daftar sekarang</a>';
+    }
+};
 function usernameToEmail(username) {
     return `${username.toLowerCase().trim()}@journal.internal`;
 }
